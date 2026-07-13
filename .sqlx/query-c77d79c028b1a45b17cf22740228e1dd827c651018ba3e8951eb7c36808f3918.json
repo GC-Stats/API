@@ -1,0 +1,303 @@
+{
+  "db_name": "MySQL",
+  "query": "\n        SELECT\n            p.id, p.handle, p.first_name, p.last_name,\n            p.country_code, p.bio, p.socials, p.vlr_id, p.is_active,\n            t.id as \"team_id?\", t.name as \"team_name?\", t.short_name as \"team_short?\",\n            t.country_code as \"team_country?\", t.socials as \"team_socials?\",\n            t.bio as \"team_bio?\", t.vlr_id as \"team_vlr?\", t.is_active as \"team_active?\"\n        FROM players p\n        LEFT JOIN player_team pt ON p.id = pt.player_id AND pt.left_at IS NULL\n        LEFT JOIN teams t ON pt.team_id = t.id\n        WHERE p.handle LIKE ?\n        LIMIT 20\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "handle",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "handle"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "first_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "first_name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "last_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "last_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "country_code",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 12
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "country_code"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "bio",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "bio"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "socials",
+        "type_info": {
+          "type": "Blob",
+          "flags": "NOT_NULL | BLOB | BINARY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "socials"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "vlr_id",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "vlr_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "is_active",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "NOT_NULL | MULTIPLE_KEY",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "team_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "team_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "team_short?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 40
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "short_name"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "team_country?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 12
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "country_code"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "team_socials?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB | BINARY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "socials"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "team_bio?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "bio"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "team_vlr?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "vlr_id"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "team_active?",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "MULTIPLE_KEY",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "is_active"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c77d79c028b1a45b17cf22740228e1dd827c651018ba3e8951eb7c36808f3918"
+}

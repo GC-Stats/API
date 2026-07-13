@@ -1,0 +1,264 @@
+{
+  "db_name": "MySQL",
+  "query": "\n        SELECT\n            t.id, t.name, t.region, t.category, t.description,\n            t.prize_pool, t.location, t.start_date, t.end_date, t.status,\n            tp.id as \"phase_id?\",\n            tp.name as \"phase_name?\",\n            tp.format as \"phase_format?\",\n            tp.parent_id as \"phase_parent?\",\n            GROUP_CONCAT(DISTINCT m.id) as \"phase_match_ids?\"\n        FROM tournaments t\n        LEFT JOIN tournament_phases tp ON t.id = tp.tournament_id\n        LEFT JOIN matches m ON tp.id = m.phase_id\n        WHERE t.name LIKE ?\n        GROUP BY t.id, tp.id\n        ORDER BY t.name, tp.id\n        LIMIT 20\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "region",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "region"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "category",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "category"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "prize_pool",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "prize_pool"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "location",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "location"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "start_date",
+        "type_info": {
+          "type": "Date",
+          "flags": "NOT_NULL | BINARY | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "start_date"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "end_date",
+        "type_info": {
+          "type": "Date",
+          "flags": "NOT_NULL | BINARY | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "end_date"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "status",
+        "type_info": {
+          "type": "String",
+          "flags": "NOT_NULL | ENUM",
+          "collation": 255,
+          "max_size": 32
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournaments",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "phase_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournament_phases",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "phase_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournament_phases",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "phase_format?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournament_phases",
+            "name": "format"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "phase_parent?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "MULTIPLE_KEY | UNSIGNED",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.tournament_phases",
+            "name": "parent_id"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "phase_match_ids?",
+        "type_info": {
+          "type": "LongBlob",
+          "flags": "",
+          "collation": 255,
+          "max_size": 65536
+        },
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "dbd7526db82980f1fc5818350c4fb7bdc9804dd93c0b338cc10eb2336679b1e6"
+}

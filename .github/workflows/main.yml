@@ -1,0 +1,29 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  run-checks:
+    uses: ./.github/workflows/checks.yml
+
+  deploy-preprod:
+    needs: [run-checks]
+    if: success() && github.event_name == 'push'
+    uses: ./.github/workflows/deploy-common.yml
+    with:
+      environment: preprod
+    secrets: inherit
+
+  deploy-prod:
+    needs: [run-checks]
+    if: success() && github.event_name == 'release'
+    uses: ./.github/workflows/deploy-common.yml
+    with:
+      environment: prod
+    secrets: inherit

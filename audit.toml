@@ -1,0 +1,2 @@
+[ignore]
+RUSTSEC-2023-0071 = { reason = "Used only for MySQL auth in sqlx, not for sensitive crypto operations. No fix available upstream." }

@@ -1,0 +1,82 @@
+{
+  "db_name": "MySQL",
+  "query": "\n        SELECT team_id, map_name, `type` as veto_type, `order`\n        FROM match_vetos\n        WHERE match_id = ?\n        ORDER BY `order` ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "team_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.match_vetos",
+            "name": "team_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "map_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.match_vetos",
+            "name": "map_name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "veto_type",
+        "type_info": {
+          "type": "String",
+          "flags": "NOT_NULL | ENUM | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 28
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.match_vetos",
+            "name": "type"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "order",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.match_vetos",
+            "name": "order"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3ddf53e23b000757e3bf5afafc5e5fac959008a6f756ff86d9a72408b603ddd8"
+}

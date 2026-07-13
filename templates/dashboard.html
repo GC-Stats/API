@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Dashboard - GC Stats APi</title>
+
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="GC Stats" />
+
+    <link rel="stylesheet" href="/assets/tailwind.css">
+    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" crossorigin>
+    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" media="print" onload="this.media='all'">
+</head>
+
+<body class="flex flex-col min-h-screen">
+<a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[var(--brand-yellow)] focus:text-black focus:font-black focus:text-xs focus:uppercase focus:tracking-widest focus:rounded-lg">
+    Skip to content
+</a>
+
+<nav
+        aria-label="Header"
+        class="sticky top-4 z-50 w-[calc(100%-2rem)] max-w-7xl mx-auto bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
+    <div class="px-4 md:px-6">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-6">
+                <a href="/dashboard" class="brand-logo group flex items-center shrink-0">
+                            <span class="text-xl md:text-2xl font-black tracking-tighter text-white uppercase italic transition-all group-hover:drop-shadow-[0_0_8px_var(--brand-yellow)]">
+                                GC<span class="gc-stats-text text-[var(--brand-yellow)]">STATS</span>
+                            </span>
+                </a>
+
+                <div class="hidden md:flex items-center gap-2">
+                    <a href="/dashboard"
+                       {% if nav_active == "dashboard" %}aria-current="page"{% endif %}
+                    class="relative px-5 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-lg {% if nav_active == "dashboard" %}bg-[var(--brand-yellow)] text-black{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}">
+                    Dashboard
+                    </a>
+                    <a href="/dashboard/history"
+                       {% if nav_active == "history" %}aria-current="page"{% endif %}
+                    class="relative px-5 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-lg {% if nav_active == "history" %}bg-[var(--brand-yellow)] text-black{% else %}text-gray-400 hover:bg-white/5 hover:text-white{% endif %}">
+                    History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+    <div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-[var(--brand-yellow)] opacity-[0.03] blur-[120px]"></div>
+    <div class="absolute top-[20%] -right-[5%] w-[30%] h-[30%] rounded-full bg-[var(--brand-yellow)] opacity-[0.02] blur-[100px]"></div>
+</div>
+
+<main id="main-content" tabindex="-1" class="w-full max-w-[1500px] mx-auto px-6 py-8 pb-16 pt-10">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <h1 class="text-[1.4rem] font-bold m-0">Your API key usage</h1>
+        <div class="bg-input border border-subtle rounded px-3 py-1.5 font-mono text-[0.85rem] text-secondary">{{ key_preview }} · limit {{ rate_limit }} req/min</div>
+    </div>
+
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-6">
+        <div class="bg-card border border-subtle rounded p-[18px]">
+            <div class="text-secondary text-[0.8rem] uppercase tracking-[0.05em] mb-2">Total requests</div>
+            <div class="text-[1.6rem] font-bold">{{ total_requests }}</div>
+        </div>
+        <div class="bg-card border border-subtle rounded p-[18px]">
+            <div class="text-secondary text-[0.8rem] uppercase tracking-[0.05em] mb-2">Average latency</div>
+            <div class="text-[1.6rem] font-bold text-brand">{{ avg_duration_ms }} ms</div>
+        </div>
+        <div class="bg-card border border-subtle rounded p-[18px]">
+            <div class="text-secondary text-[0.8rem] uppercase tracking-[0.05em] mb-2">Max latency</div>
+            <div class="text-[1.6rem] font-bold">{{ max_duration_ms }} ms</div>
+        </div>
+        <div class="bg-card border border-subtle rounded p-[18px]">
+            <div class="text-secondary text-[0.8rem] uppercase tracking-[0.05em] mb-2">Error rate</div>
+            <div class="text-[1.6rem] font-bold text-loss">{{ error_rate }}%</div>
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <h2 class="text-[1.05rem] mt-0 mb-3 text-secondary uppercase tracking-[0.05em] font-semibold">Status codes</h2>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-3">
+            <div class="text-center p-[14px] rounded border border-subtle bg-card">
+                <div class="text-[1.3rem] font-bold text-win">{{ success_count }}</div>
+                <div class="text-secondary text-[0.75rem] mt-1">2xx / 1xx</div>
+                <div class="text-muted text-[0.7rem] mt-0.5 uppercase tracking-[0.05em]">Success</div>
+            </div>
+            <div class="text-center p-[14px] rounded border border-subtle bg-card">
+                <div class="text-[1.3rem] font-bold text-brand">{{ not_found_count }}</div>
+                <div class="text-secondary text-[0.75rem] mt-1">404</div>
+                <div class="text-muted text-[0.7rem] mt-0.5 uppercase tracking-[0.05em]">Not Found</div>
+            </div>
+            <div class="text-center p-[14px] rounded border border-subtle bg-card">
+                <div class="text-[1.3rem] font-bold text-brand">{{ rate_limited_count }}</div>
+                <div class="text-secondary text-[0.75rem] mt-1">429</div>
+                <div class="text-muted text-[0.7rem] mt-0.5 uppercase tracking-[0.05em]">Rate Limited</div>
+            </div>
+            <div class="text-center p-[14px] rounded border border-subtle bg-card">
+                <div class="text-[1.3rem] font-bold text-loss">{{ client_error_count }}</div>
+                <div class="text-secondary text-[0.75rem] mt-1">4xx</div>
+                <div class="text-muted text-[0.7rem] mt-0.5 uppercase tracking-[0.05em]">Client Error</div>
+            </div>
+            <div class="text-center p-[14px] rounded border border-subtle bg-card">
+                <div class="text-[1.3rem] font-bold text-loss">{{ server_error_count }}</div>
+                <div class="text-secondary text-[0.75rem] mt-1">5xx</div>
+                <div class="text-muted text-[0.7rem] mt-0.5 uppercase tracking-[0.05em]">Server Error</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <h2 class="text-[1.05rem] m-0 text-secondary uppercase tracking-[0.05em] font-semibold">Requests over time</h2>
+            <form method="get" action="/dashboard" class="flex items-center">
+                <input type="hidden" name="sort" value="{{ sort_selected }}">
+                <select name="bucket" onchange="this.form.submit()" class="bg-input border border-subtle rounded text-white px-3 py-2 text-[0.85rem] cursor-pointer focus:outline-none focus:border-brand">
+                    <option value="1h" {% if bucket_selected == "1h" %}selected{% endif %}>Per hour</option>
+                    <option value="6h" {% if bucket_selected == "6h" %}selected{% endif %}>Per 6 hours</option>
+                    <option value="12h" {% if bucket_selected == "12h" %}selected{% endif %}>Per 12 hours</option>
+                    <option value="24h" {% if bucket_selected == "24h" %}selected{% endif %}>Per 24 hours</option>
+                </select>
+            </form>
+        </div>
+        {% if bucket_counts.is_empty() %}
+        <div class="text-muted text-[0.85rem] p-4 text-center">No data available yet.</div>
+        {% else %}
+        <div class="flex gap-2">
+            <div class="flex flex-col justify-between h-[160px] py-3 text-[0.7rem] text-muted text-right shrink-0">
+                <span>{{ max_bucket_count }}</span>
+                <span>{{ max_bucket_count / 2 }}</span>
+                <span>0</span>
+            </div>
+            <div class="relative flex-1 h-[160px] px-3 pt-3 pb-1 bg-card border border-subtle rounded">
+                <svg viewBox="-2 -4 104 108" preserveAspectRatio="none" class="w-full h-full block overflow-visible" id="requests-chart">
+                    <defs>
+                        <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#e4ae22" stop-opacity="0.18"/>
+                            <stop offset="100%" stop-color="#e4ae22" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <line x1="0" y1="25" x2="100" y2="25" stroke-width="0.4" class="chart-grid"/>
+                    <line x1="0" y1="50" x2="100" y2="50" stroke-width="0.4" class="chart-grid"/>
+                    <line x1="0" y1="75" x2="100" y2="75" stroke-width="0.4" class="chart-grid"/>
+                    <polygon points="{{ chart_points }} 100,100 0,100" class="chart-area"/>
+                    <polyline points="{{ chart_points }}" class="chart-path"/>
+                    {% for b in bucket_counts %}
+                    <rect x="{{ b.hit_x }}" y="-4" width="{{ b.hit_width }}" height="108" class="chart-dot" data-cx="{{ b.cx }}" data-cy="{{ b.cy }}" data-count="{{ b.count }}" data-label="{{ b.label }}"></rect>
+                    {% endfor %}
+                </svg>
+                <div id="chart-marker" class="hidden absolute w-2 h-2 -ml-1 -mt-1 rounded-full bg-[var(--brand-yellow)] shadow-[0_0_6px_rgba(228,174,34,0.8)] pointer-events-none"></div>
+                <div id="chart-tooltip" class="hidden absolute z-10 px-2 py-1 rounded bg-black/90 border border-subtle text-[0.75rem] text-white pointer-events-none whitespace-nowrap"></div>
+            </div>
+        </div>
+        <div class="flex justify-between gap-1 mt-2">
+            {% for b in bucket_counts %}
+            <div class="flex-1 text-center text-[0.7rem] text-muted whitespace-nowrap overflow-hidden text-ellipsis">{{ b.label }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mb-6">
+        <h2 class="text-[1.05rem] mt-0 mb-3 text-secondary uppercase tracking-[0.05em] font-semibold">Top endpoints</h2>
+        {% if top_endpoints.is_empty() %}
+        <div class="text-muted text-[0.85rem] p-4 text-center">No requests recorded yet.</div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse bg-card border border-subtle rounded overflow-hidden">
+                <thead>
+                <tr>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Method</th>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Endpoint</th>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Calls</th>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Avg. latency</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for ep in top_endpoints %}
+                <tr class="group hover:bg-card-hover">
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0"><span class="inline-block px-2 py-0.5 rounded text-[0.7rem] font-bold bg-input border {{ ep.method_class }}">{{ ep.method }}</span></td>
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0">{{ ep.endpoint }}</td>
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0">{{ ep.count }}</td>
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0">{{ ep.avg_duration_ms }} ms</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mb-6">
+        <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+            <h2 class="text-[1.05rem] m-0 text-secondary uppercase tracking-[0.05em] font-semibold">Recent requests</h2>
+            <div class="flex items-center gap-2">
+                <a href="/dashboard/history" class="bg-transparent text-secondary border border-subtle rounded px-[18px] py-2 text-[0.85rem] font-semibold cursor-pointer hover:bg-card-hover hover:text-white transition-colors duration-150 no-underline">View full history</a>
+                <form method="get" action="/dashboard" class="flex items-center">
+                    <input type="hidden" name="bucket" value="{{ bucket_selected }}">
+                    <select name="sort" onchange="this.form.submit()" class="bg-input border border-subtle rounded text-white px-3 py-2 text-[0.85rem] cursor-pointer focus:outline-none focus:border-brand">
+                        <option value="date" {% if sort_selected == "date" %}selected{% endif %}>Sort by date</option>
+                        <option value="status" {% if sort_selected == "status" %}selected{% endif %}>Sort by status code</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+        {% if recent_logs.is_empty() %}
+        <div class="text-muted text-[0.85rem] p-4 text-center">No requests recorded yet.</div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse bg-card border border-subtle rounded overflow-hidden" id="recent-logs-table">
+                <thead>
+                <tr>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Date</th>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Method</th>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Endpoint</th>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Status</th>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">Duration</th>
+                    <th class="text-left px-[14px] py-[10px] text-[0.7rem] text-secondary uppercase tracking-[0.05em] font-semibold border-b border-subtle">User-Agent</th>
+                </tr>
+                </thead>
+                <tbody id="recent-logs-body">
+                {% for log in recent_logs %}
+                <tr class="group hover:bg-card-hover">
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0">{{ log.created_at }}</td>
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0"><span class="inline-block px-2 py-0.5 rounded text-[0.7rem] font-bold bg-input border {{ log.method_class }}">{{ log.method }}</span></td>
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0">{{ log.endpoint }}</td>
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0 {{ log.status_class }}">{{ log.status_code }}</td>
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0">{{ log.duration_ms }} ms</td>
+                    <td class="px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0">{{ log.user_agent }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="flex justify-center mt-3">
+            <button type="button" id="load-more-btn"
+                    class="bg-transparent text-secondary border border-subtle rounded px-[18px] py-2 text-[0.85rem] font-semibold cursor-pointer hover:bg-card-hover hover:text-white transition-colors duration-150 {% if !recent_logs_has_more %}hidden{% endif %}">Load more</button>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="flex flex-col items-center gap-1">
+        <p class="text-muted text-[0.85rem] text-center m-0">Stats are updated every 5 minutes.</p>
+    </footer>
+</main>
+
+<footer role="contentinfo" class="relative bg-[#050505] border-t border-white/5 pt-10 pb-10 overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[var(--brand-yellow)]/20 to-transparent"></div>
+
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8 mb-16 items-start">
+
+            <div class="flex flex-col items-center md:items-start">
+                <a href="/" class="brand-logo group flex items-center mb-6">
+                            <span class="text-2xl font-black tracking-tighter text-white uppercase italic">
+                                GC<span class="gc-stats-text text-[var(--brand-yellow)] group-hover:drop-shadow-[0_0_8px_var(--brand-yellow)] transition-all">STATS</span>
+                            </span>
+                </a>
+                <p class="text-gray-500 text-[11px] leading-relaxed max-w-[200px] text-center md:text-left font-bold tracking-wider">
+                    A place to find all official GC competitions, without exception.
+                </p>
+            </div>
+
+            <div class="flex flex-col items-center md:items-start">
+                <h4 class="h-8 flex items-center text-[10px] font-black uppercase tracking-[0.3em] text-white/90 mb-4 gap-2">
+                    <span class="w-1 h-3 bg-[var(--brand-yellow)]"></span>
+                    About
+                </h4>
+                <ul class="space-y-4 w-full">
+                    <li>
+                        <a href="https://gc-stats.app/about" class="text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-all flex items-center justify-center md:justify-start gap-2 group">
+                            <span class="w-0 h-[1px] bg-[var(--brand-yellow)] transition-all group-hover:w-3"></span>
+                            About Us
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://gc-stats.app/takedown" class="text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-all flex items-center justify-center md:justify-start gap-2 group">
+                            <span class="w-0 h-[1px] bg-[var(--brand-yellow)] transition-all group-hover:w-3"></span>
+                            Content Removal Request
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://gc-stats.app/developers" class="text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-all flex items-center justify-center md:justify-start gap-2 group">
+                            <span class="w-0 h-[1px] bg-[var(--brand-yellow)] transition-all group-hover:w-3"></span>
+                            Developer Documentation
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="flex flex-col items-center md:items-start">
+                <h4 class="h-8 flex items-center text-[10px] font-black uppercase tracking-[0.3em] text-white/90 mb-4 gap-2">
+                    <span class="w-1 h-3 bg-[var(--brand-yellow)]"></span>
+                    Help & Information
+                </h4>
+                <ul class="space-y-4 w-full">
+                    <li>
+                        <a href="https://gc-stats.app/help/edit_page" class="text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-all flex items-center justify-center md:justify-start gap-2 group">
+                            <span class="w-0 h-[1px] bg-[var(--brand-yellow)] transition-all group-hover:w-3"></span>
+                            Modify player/team page
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://gc-stats.app/help/add_tournament" class="text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-all flex items-center justify-center md:justify-start gap-2 group">
+                            <span class="w-0 h-[1px] bg-[var(--brand-yellow)] transition-all group-hover:w-3"></span>
+                            Integrate your tournament
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="flex flex-col items-center md:items-start">
+                <h4 class="h-8 flex items-center text-[10px] font-black uppercase tracking-[0.3em] text-white/90 mb-4">
+                    Our Socials
+                </h4>
+                <div class="flex gap-3">
+                    <a href="https://x.com/GC_Stats" target="_blank" rel="noopener noreferrer"
+                       aria-label="Twitter / X"
+                       class="w-11 h-11 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white transition-all duration-300 hover:bg-[#1DA1F2] hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(0,0,0,0.4)]">
+                        <i class="fab fa-twitter text-lg" aria-hidden="true"></i>
+                    </a>
+                    <a href="https://discord.gg/JZgVmAFK9a" target="_blank" rel="noopener noreferrer"
+                       aria-label="Discord"
+                       class="w-11 h-11 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white transition-all duration-300 hover:bg-[#5865F2] hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(0,0,0,0.4)]">
+                        <i class="fab fa-discord text-lg" aria-hidden="true"></i>
+                    </a>
+                    <a href="https://github.com/GC-Stats/" target="_blank" rel="noopener noreferrer"
+                       aria-label="Github"
+                       class="w-11 h-11 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white transition-all duration-300 hover:bg-white hover:text-black hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(0,0,0,0.4)]">
+                        <i class="fab fa-github text-lg" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
+            <p class="text-[9px] text-gray-600 font-bold uppercase tracking-[0.2em] italic">
+                © 2026 GC Stats. All rights reserved.
+            </p>
+
+            <div class="flex gap-8 items-center">
+                <a href="https://gc-stats.app/terms" class="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Terms of Service</a>
+                <div class="w-1 h-1 bg-white/10 rounded-full"></div>
+                <a href="https://gc-stats.app/legal" class="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Legal Mentions</a>
+                <div class="w-1 h-1 bg-white/10 rounded-full"></div>
+                <a href="https://gc-stats.app/privacy" class="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Privacy Policy</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+{% include "_style.html" %}
+
+<script>
+    (function () {
+        const chart = document.getElementById("requests-chart");
+        const tooltip = document.getElementById("chart-tooltip");
+        const marker = document.getElementById("chart-marker");
+        if (!chart || !tooltip || !marker) return;
+
+        const container = chart.parentElement;
+
+        // Must match the SVG's viewBox="-2 -4 104 108"
+        const VB_X = -2, VB_Y = -4, VB_W = 104, VB_H = 108;
+
+        chart.querySelectorAll(".chart-dot").forEach(function (dot) {
+            dot.addEventListener("mouseenter", function () {
+                const count = dot.getAttribute("data-count");
+                const label = dot.getAttribute("data-label");
+                tooltip.textContent = label + " — " + count + (count === "1" ? " request" : " requests");
+                tooltip.classList.remove("hidden");
+
+                const cx = parseFloat(dot.getAttribute("data-cx"));
+                const cy = parseFloat(dot.getAttribute("data-cy"));
+                const svgRect = chart.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const left = (svgRect.left - containerRect.left) + (cx - VB_X) / VB_W * svgRect.width;
+                const top = (svgRect.top - containerRect.top) + (cy - VB_Y) / VB_H * svgRect.height;
+                marker.style.left = left + "px";
+                marker.style.top = top + "px";
+                marker.classList.remove("hidden");
+            });
+
+            dot.addEventListener("mousemove", function (e) {
+                const rect = container.getBoundingClientRect();
+                let left = e.clientX - rect.left + 10;
+                let top = e.clientY - rect.top - 10;
+                left = Math.min(left, rect.width - tooltip.offsetWidth - 4);
+                top = Math.max(top, 4);
+                tooltip.style.left = left + "px";
+                tooltip.style.top = top + "px";
+            });
+
+            dot.addEventListener("mouseleave", function () {
+                tooltip.classList.add("hidden");
+                marker.classList.add("hidden");
+            });
+        });
+    })();
+
+    (function () {
+        const btn = document.getElementById("load-more-btn");
+        if (!btn) return;
+
+        let offset = {{ recent_logs_offset }};
+        const sort = "{{ sort_selected }}";
+        const tbody = document.getElementById("recent-logs-body");
+
+        const TD = "px-[14px] py-[10px] text-[0.85rem] border-b border-subtle group-last:border-b-0";
+
+        btn.addEventListener("click", function () {
+            fetch("/dashboard/recent-logs?offset=" + offset + "&sort=" + encodeURIComponent(sort))
+                .then(function (res) {
+                    if (!res.ok) throw new Error("Failed to load more requests");
+                    return res.json();
+                })
+                .then(function (logs) {
+                    logs.forEach(function (log) {
+                        const tr = document.createElement("tr");
+                        tr.className = "group hover:bg-card-hover";
+
+                        function cell(text, extra) {
+                            const td = document.createElement("td");
+                            td.className = TD + (extra ? " " + extra : "");
+                            td.textContent = text;
+                            return td;
+                        }
+
+                        tr.appendChild(cell(log.created_at));
+
+                        const methodTd = document.createElement("td");
+                        methodTd.className = TD;
+                        const span = document.createElement("span");
+                        span.className = "inline-block px-2 py-0.5 rounded text-[0.7rem] font-bold bg-input border " + log.method_class;
+                        span.textContent = log.method;
+                        methodTd.appendChild(span);
+                        tr.appendChild(methodTd);
+
+                        tr.appendChild(cell(log.endpoint));
+                        tr.appendChild(cell(log.status_code, log.status_class));
+                        tr.appendChild(cell(log.duration_ms + " ms"));
+                        tr.appendChild(cell(log.user_agent));
+
+                        tbody.appendChild(tr);
+                    });
+
+                    offset += logs.length;
+                    if (logs.length < 50) {
+                        btn.style.display = "none";
+                    }
+                })
+                .catch(function (err) {
+                    console.error(err);
+                    btn.style.display = "none";
+                });
+        });
+    })();
+</script>
+</body>
+</html>

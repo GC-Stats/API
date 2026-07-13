@@ -1,0 +1,218 @@
+{
+  "db_name": "MySQL",
+  "query": "\n        SELECT\n            r.id as round_id, r.round_number, r.winning_team, r.win_type,\n            ps.player_id as \"player_id?\", ps.kills as \"ps_kills?\",\n            ps.assists as \"ps_assists?\", ps.score as \"ps_score?\",\n            ps.economy_spent, ps.economy_remaining, ps.weapon_id, ps.armor\n        FROM game_map_rounds r\n        LEFT JOIN game_map_round_player_stats ps ON r.id = ps.game_map_round_id\n        WHERE r.game_map_id = ?\n        ORDER BY r.round_number ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "round_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_rounds",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "round_number",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_rounds",
+            "name": "round_number"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "winning_team",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_rounds",
+            "name": "winning_team"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "win_type",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_rounds",
+            "name": "win_type"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "player_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_round_player_stats",
+            "name": "player_id"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "ps_kills?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_round_player_stats",
+            "name": "kills"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "ps_assists?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_round_player_stats",
+            "name": "assists"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "ps_score?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_round_player_stats",
+            "name": "score"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "economy_spent",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_round_player_stats",
+            "name": "economy_spent"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "economy_remaining",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_round_player_stats",
+            "name": "economy_remaining"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "weapon_id",
+        "type_info": {
+          "type": "VarString",
+          "flags": "MULTIPLE_KEY",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_round_player_stats",
+            "name": "weapon_id"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "armor",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_map_round_player_stats",
+            "name": "armor"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "40aa1892ce38356a715fc3000b5de1a7fb96dd6f7af5ed86cc3749374434dbcd"
+}

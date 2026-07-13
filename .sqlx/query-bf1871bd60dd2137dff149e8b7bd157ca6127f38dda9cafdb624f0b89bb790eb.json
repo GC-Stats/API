@@ -1,0 +1,150 @@
+{
+  "db_name": "MySQL",
+  "query": "\n        SELECT id, match_id, api_match_id, map_name,\n               team_a_score as \"team_a_score!\", team_b_score as \"team_b_score!\", `order`, is_completed\n        FROM game_maps\n        WHERE match_id = ?\n        ORDER BY `order` ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "match_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "match_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "api_match_id",
+        "type_info": {
+          "type": "VarString",
+          "flags": "UNIQUE_KEY",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "api_match_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "map_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "map_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "team_a_score!",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "team_a_score"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "team_b_score!",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "team_b_score"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "order",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "order"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "is_completed",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "NOT_NULL",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "is_completed"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "bf1871bd60dd2137dff149e8b7bd157ca6127f38dda9cafdb624f0b89bb790eb"
+}

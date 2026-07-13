@@ -1,0 +1,269 @@
+{
+  "db_name": "MySQL",
+  "query": "\n        SELECT p.*, pt.left_at\n        FROM players p\n        JOIN player_team pt ON p.id = pt.player_id\n        WHERE pt.team_id = ?\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "handle",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "handle"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "first_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "first_name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "last_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "last_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "country_code",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 12
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "country_code"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "bio",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "bio"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "socials",
+        "type_info": {
+          "type": "Blob",
+          "flags": "NOT_NULL | BLOB | BINARY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "socials"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "discord_id",
+        "type_info": {
+          "type": "VarString",
+          "flags": "UNIQUE_KEY",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "discord_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "val_id",
+        "type_info": {
+          "type": "VarString",
+          "flags": "UNIQUE_KEY",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "val_id"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "vlr_id",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "vlr_id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "liquipedia_link",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "liquipedia_link"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "is_active",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "NOT_NULL | MULTIPLE_KEY",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": {
+          "type": "Timestamp",
+          "flags": "BINARY",
+          "collation": 63,
+          "max_size": 19
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": {
+          "type": "Timestamp",
+          "flags": "BINARY",
+          "collation": 63,
+          "max_size": 19
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "left_at",
+        "type_info": {
+          "type": "Date",
+          "flags": "BINARY",
+          "collation": 63,
+          "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.player_team",
+            "name": "left_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "cd39cc84c6c442674f0627751dcb54556f6047c6c4d38aae19c8fc7dd0fb7f7a"
+}

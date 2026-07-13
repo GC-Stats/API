@@ -1,0 +1,52 @@
+<!-- Styling comes from the compiled /assets/tailwind.css (colors defined in assets/input.css @theme). -->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+    :root {
+        /* Main GC Colors */
+        --brand-yellow: #e4ae22;
+        --brand-yellow-hover: #c9981d;
+
+        /* Backgrounds */
+        --bg-main: #0b0b0b;
+        --bg-card: #161616;
+        --bg-card-hover: #1f1f1f;
+        --bg-input: #050505;
+
+        /* Texts */
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --text-muted: #666666;
+
+        /* Status */
+        --color-live: #00ff88;
+        --color-win: #00ff88;
+        --color-loss: #ff4655;
+
+        /* Layout */
+        --header-height: 60px;
+        --border-radius: 4px;
+    }
+
+    body {
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-main); }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--brand-yellow); }
+
+    .chart-path { fill: none; stroke: #e4ae22; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+    .chart-area { fill: url(#chart-grad); }
+    .chart-grid { stroke: #2a2a2a; vector-effect: non-scaling-stroke; }
+    .chart-dot { fill: transparent; cursor: pointer; }
+</style>
+<!-- Tailwind safelist: ensures dynamic classes are generated for JS-appended rows -->
+<div class="hidden" aria-hidden="true">
+    <span class="text-win border-win/40 text-brand border-brand/40 text-[#4aa8ff] border-[#4aa8ff]/40 text-[#c084fc] border-[#c084fc]/40 text-loss border-loss/40 text-secondary border-subtle bg-input group hover:bg-card-hover group-last:border-b-0 text-win font-semibold text-brand font-semibold text-loss font-semibold"></span>
+</div>

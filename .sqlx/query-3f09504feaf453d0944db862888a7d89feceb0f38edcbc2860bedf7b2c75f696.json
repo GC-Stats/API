@@ -1,0 +1,633 @@
+{
+  "db_name": "MySQL",
+  "query": "\n        SELECT\n            m.id, m.match_id, m.api_match_id, m.map_name,\n            m.team_a_score as \"team_a_score!\", m.team_b_score as \"team_b_score!\", m.order as map_order, m.is_completed,\n\n            -- Team A\n            ta.id as \"ta_id?\", ta.name as \"ta_name?\", ta.short_name as \"ta_short_name?\",\n            ta.country_code as \"ta_country_code?\", ta.bio as \"ta_bio?\",\n            ta.socials as \"ta_socials?\", ta.vlr_id as \"ta_vlr_id?\", ta.is_active as \"ta_is_active?\",\n\n            -- Team B\n            tb.id as \"tb_id?\", tb.name as \"tb_name?\", tb.short_name as \"tb_short_name?\",\n            tb.country_code as \"tb_country_code?\", tb.bio as \"tb_bio?\",\n            tb.socials as \"tb_socials?\", tb.vlr_id as \"tb_vlr_id?\", tb.is_active as \"tb_is_active?\",\n\n            -- Game Player Stats\n            gps.id as \"player_stats_id?\",\n            gps.player_id as \"player_id?\", gps.team_id as \"team_id?\",\n            gps.agent_name as \"agent_name?\", gps.kills as \"player_kills?\",\n            gps.deaths as \"player_deaths?\", gps.assists as \"player_assists?\",\n            gps.acs as \"player_acs?\", gps.adr as \"player_adr?\",\n            gps.first_kills as \"player_first_kills?\", gps.first_deaths as \"player_first_deaths?\",\n\n            CAST(gps.kast_percentage AS DOUBLE) as \"player_kast?\",\n            CAST(gps.headshot_percentage AS DOUBLE) as \"player_hs?\"\n\n\n        FROM game_maps m\n        LEFT JOIN matches ma ON m.match_id = ma.id\n        LEFT JOIN teams ta ON ma.team_a_id = ta.id\n        LEFT JOIN teams tb ON ma.team_b_id = tb.id\n        LEFT JOIN game_player_stats gps ON m.id = gps.game_map_id\n        WHERE m.id = ?\n        ORDER BY gps.id ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "match_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "match_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "api_match_id",
+        "type_info": {
+          "type": "VarString",
+          "flags": "UNIQUE_KEY",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "api_match_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "map_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "map_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "team_a_score!",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "team_a_score"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "team_b_score!",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "team_b_score"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "map_order",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "order"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "is_completed",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "NOT_NULL",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_maps",
+            "name": "is_completed"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "ta_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "ta_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "ta_short_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 40
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "short_name"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "ta_country_code?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 12
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "country_code"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "ta_bio?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "bio"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "ta_socials?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB | BINARY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "socials"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "ta_vlr_id?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "vlr_id"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "ta_is_active?",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "MULTIPLE_KEY",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "tb_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "tb_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "tb_short_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 40
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "short_name"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "tb_country_code?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 12
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "country_code"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "tb_bio?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "bio"
+          }
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "tb_socials?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB | BINARY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "socials"
+          }
+        }
+      },
+      {
+        "ordinal": 22,
+        "name": "tb_vlr_id?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "vlr_id"
+          }
+        }
+      },
+      {
+        "ordinal": 23,
+        "name": "tb_is_active?",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "MULTIPLE_KEY",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 24,
+        "name": "player_stats_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 25,
+        "name": "player_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "MULTIPLE_KEY | UNSIGNED",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "player_id"
+          }
+        }
+      },
+      {
+        "ordinal": 26,
+        "name": "team_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "team_id"
+          }
+        }
+      },
+      {
+        "ordinal": 27,
+        "name": "agent_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "agent_name"
+          }
+        }
+      },
+      {
+        "ordinal": 28,
+        "name": "player_kills?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "kills"
+          }
+        }
+      },
+      {
+        "ordinal": 29,
+        "name": "player_deaths?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "deaths"
+          }
+        }
+      },
+      {
+        "ordinal": 30,
+        "name": "player_assists?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "assists"
+          }
+        }
+      },
+      {
+        "ordinal": 31,
+        "name": "player_acs?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "acs"
+          }
+        }
+      },
+      {
+        "ordinal": 32,
+        "name": "player_adr?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "adr"
+          }
+        }
+      },
+      {
+        "ordinal": 33,
+        "name": "player_first_kills?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "first_kills"
+          }
+        }
+      },
+      {
+        "ordinal": 34,
+        "name": "player_first_deaths?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.game_player_stats",
+            "name": "first_deaths"
+          }
+        }
+      },
+      {
+        "ordinal": 35,
+        "name": "player_kast?",
+        "type_info": {
+          "type": "Double",
+          "flags": "BINARY",
+          "collation": 63,
+          "max_size": 23
+        },
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 36,
+        "name": "player_hs?",
+        "type_info": {
+          "type": "Double",
+          "flags": "BINARY",
+          "collation": 63,
+          "max_size": 23
+        },
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "3f09504feaf453d0944db862888a7d89feceb0f38edcbc2860bedf7b2c75f696"
+}

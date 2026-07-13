@@ -1,0 +1,473 @@
+{
+  "db_name": "MySQL",
+  "query": "\n        SELECT\n            m.id, m.tournament_id, m.phase_id, m.round_number, m.scheduled_at,\n            m.round_name, m.status, m.best_of, m.patch,\n            m.team_a_score, m.team_b_score,\n\n            ta.id as \"ta_id?\", ta.name as \"ta_name?\", ta.short_name as \"ta_short_name?\",\n            ta.country_code as \"ta_country_code?\", ta.bio as \"ta_bio?\",\n            ta.socials as \"ta_socials?\", ta.vlr_id as \"ta_vlr_id?\", ta.is_active as \"ta_is_active?\",\n\n            tb.id as \"tb_id?\", tb.name as \"tb_name?\", tb.short_name as \"tb_short_name?\",\n            tb.country_code as \"tb_country_code?\", tb.bio as \"tb_bio?\",\n            tb.socials as \"tb_socials?\", tb.vlr_id as \"tb_vlr_id?\", tb.is_active as \"tb_is_active?\"\n        FROM matches m\n        LEFT JOIN teams ta ON m.team_a_id = ta.id\n        LEFT JOIN teams tb ON m.team_b_id = tb.id\n        WHERE m.id = ?\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "tournament_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "tournament_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "phase_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "phase_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "round_number",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "round_number"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "scheduled_at",
+        "type_info": {
+          "type": "Datetime",
+          "flags": "NOT_NULL | MULTIPLE_KEY | BINARY | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 19
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "scheduled_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "round_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "round_name"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "status",
+        "type_info": {
+          "type": "String",
+          "flags": "NOT_NULL | MULTIPLE_KEY | ENUM",
+          "collation": 255,
+          "max_size": 32
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "best_of",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "best_of"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "patch",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "patch"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "team_a_score",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "team_a_score"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "team_b_score",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.matches",
+            "name": "team_b_score"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "ta_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "ta_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "ta_short_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 40
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "short_name"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "ta_country_code?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 12
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "country_code"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "ta_bio?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "bio"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "ta_socials?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB | BINARY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "socials"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "ta_vlr_id?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "vlr_id"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "ta_is_active?",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "MULTIPLE_KEY",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "is_active"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "tb_id?",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "tb_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "tb_short_name?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 40
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "short_name"
+          }
+        }
+      },
+      {
+        "ordinal": 22,
+        "name": "tb_country_code?",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 12
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "country_code"
+          }
+        }
+      },
+      {
+        "ordinal": 23,
+        "name": "tb_bio?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "bio"
+          }
+        }
+      },
+      {
+        "ordinal": 24,
+        "name": "tb_socials?",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB | BINARY | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "socials"
+          }
+        }
+      },
+      {
+        "ordinal": 25,
+        "name": "tb_vlr_id?",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "vlr_id"
+          }
+        }
+      },
+      {
+        "ordinal": 26,
+        "name": "tb_is_active?",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "MULTIPLE_KEY",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.teams",
+            "name": "is_active"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "e5c359950d8b779fbf0d735d34e9f966aea8fdc76bbe2236833e2d0b285ea87b"
+}
