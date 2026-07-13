@@ -5,9 +5,9 @@ The official API for **Game Changers Stats**, build in Rust for the best efficen
 
 ---
 
-| Build Status |                                        Latest Version                                        |                              License                       
-|:---:|:--------------------------------------------------------------------------------------------:|:------------------------------------------------------------------:|
-| ![Build](https://github.com/GC-Stats/website/actions/workflows/deploy-preprod.yml/badge.svg) | ![GitHub release (latest by date)](https://img.shields.io/github/v/release/GC-Stats/website) | ![License](https://img.shields.io/github/license/GC-Stats/website) 
+| Build Status |                       Latest Version                                                    |
+|:---:|:---------------------------------------------------------------------------------------:|
+| [![CI/CD Pipeline](https://github.com/GC-Stats/API/actions/workflows/main.yml/badge.svg)](https://github.com/GC-Stats/API/actions/workflows/main.yml) |![GitHub release (latest by date)](https://img.shields.io/github/v/release/GC-Stats/API) 
 
 ---
 
