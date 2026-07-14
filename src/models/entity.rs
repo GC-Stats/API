@@ -1,3 +1,15 @@
+/*
+    GC-Stats — API
+
+    Shared response models and helpers for players and teams: logo/photo URL
+    building, logo history partitioning, batched current-logo lookups, and
+    the `Player`/`Team` DB row types.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use sqlx::FromRow;

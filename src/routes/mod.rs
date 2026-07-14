@@ -1,3 +1,14 @@
+/*
+    GC-Stats — API
+
+    Declares the routes module and assembles the versioned `/v1` API router
+    from the teams, players, tournaments, matches and map routers.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use std::sync::Arc;
 use axum::Router;
 use crate::AppState;

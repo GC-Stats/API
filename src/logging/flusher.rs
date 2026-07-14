@@ -1,3 +1,16 @@
+/*
+    GC-Stats — API
+
+    Background task that periodically drains buffered request-log entries
+    from local Redis into the `api_request_log` MariaDB table. Uses an
+    inflight key so a crash mid-flush is recovered and retried on the next
+    cycle without losing entries.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use std::sync::Arc;
 use std::time::Duration;
 use redis::{AsyncCommands, Script};

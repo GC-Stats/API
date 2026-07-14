@@ -1,3 +1,15 @@
+/*
+    GC-Stats — API
+
+    OpenAPI documentation for the public API. Declares the documented paths,
+    response schemas and tags, and registers the `x-api-key` header security
+    scheme shown in Swagger UI.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use utoipa::openapi::security::{ApiKey, ApiKeyValue, SecurityScheme};
 use utoipa::{Modify, OpenApi};
 use crate::routes::{matches, players, tournaments, map};

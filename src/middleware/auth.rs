@@ -1,3 +1,15 @@
+/*
+    GC-Stats — API
+
+    Authentication and rate-limiting middleware for the `/v1` API. Validates
+    the `x-api-key` header against MariaDB (cached in Redis) and enforces a
+    sliding-window rate limit per key.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use axum::{
     extract::{State, Request},
     http::StatusCode,
