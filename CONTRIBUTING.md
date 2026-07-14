@@ -23,8 +23,14 @@ Before you spend time writing code, **please open a "Feature Request" or "Bug Re
 2. Name your branch clearly: `feature/short-description` or `fix/short-description`.
 3. Follow the installation steps in the `README.md`.
 
-### 4. Submitting a Pull Request
+### 3. Submitting a Pull Request
 
    - Provide a clear description of what the PR changes or adds.
    - Reference the original Issue (e.g., Closes #123).
-   - Ensure all tests pass (php artisan test).
+   - Before pushing, make sure the checks that CI runs pass locally:
+     ```bash
+     cargo fmt --check
+     cargo clippy -- -D warnings
+     cargo test
+     ```
+

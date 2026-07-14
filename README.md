@@ -15,7 +15,7 @@ The official API for **Game Changers Stats**, build in Rust for the best efficen
 This repository contains the Rust API use for our API.
 
 ## 🤝 License
-License: This project is licensed under a modified MIT License - see the [LICENSE](https://github.com/GC-Stats/API/blob/main/LICENSE) file for details.
+License: This project is licensed under the GC-Stats License v1.0 - see the [LICENSE](https://github.com/GC-Stats/API/blob/main/LICENSE) file for details.
 
 ## 🛠 Tech Stack
 
