@@ -1,3 +1,14 @@
+/*
+    GC-Stats — API
+
+    `/v1/tournaments` endpoints: search tournaments by name, fetch a
+    tournament's full details with its phases, and its logo history.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use axum::{extract::{Path, State}, Json, http::StatusCode, Router};
 use std::sync::Arc;
 use axum::routing::get;

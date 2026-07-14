@@ -1,3 +1,15 @@
+/*
+    GC-Stats — API
+
+    Application entrypoint. Loads configuration, connects to MariaDB and
+    Redis, builds the Axum router (health check, dashboard, versioned `/v1`
+    API, Swagger UI) and starts the HTTP server.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 mod models;
 mod routes;
 mod middleware;

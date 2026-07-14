@@ -1,3 +1,14 @@
+/*
+    GC-Stats — API
+
+    `/v1/matches` endpoint: fetch a match's full details (teams, maps,
+    vetoes).
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use axum::{extract::{Path, State}, Json, http::StatusCode, Router};
 use std::sync::Arc;
 use axum::routing::get;

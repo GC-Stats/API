@@ -1,3 +1,12 @@
+# GC-Stats — API
+#
+# Multi-stage Docker build: compiles the Rust binary and Tailwind CSS
+# assets, then copies them into a slim runtime image.
+#
+# Copyright (c) 2026 Alice Alleman — GC-Stats-API
+# License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+# Repository: https://github.com/GC-Stats/API
+
 FROM rust:1.95-slim-bookworm AS builder
 
 RUN apt-get update && apt-get install -y \

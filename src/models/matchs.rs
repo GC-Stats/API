@@ -1,3 +1,14 @@
+/*
+    GC-Stats — API
+
+    Response models for matches: the match record itself and its map
+    vetoes.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use serde::{Serialize, Deserialize};
 use sqlx::FromRow;
 use chrono::{ NaiveDateTime };

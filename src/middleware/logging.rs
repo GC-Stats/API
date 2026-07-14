@@ -1,3 +1,15 @@
+/*
+    GC-Stats — API
+
+    Middleware that records method, matched route, status code, duration and
+    user agent for each request, then pushes the entry onto the local Redis
+    buffer for later flushing to MariaDB.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use axum::{
     extract::{State, Request},
     middleware::Next,

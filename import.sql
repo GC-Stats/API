@@ -1,3 +1,12 @@
+-- GC-Stats — API
+--
+-- Database schema/data dump used to (re)create the gc_prod database
+-- structure.
+--
+-- Copyright (c) 2026 Alice Alleman — GC-Stats-API
+-- License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+-- Repository: https://github.com/GC-Stats/API
+
 -- phpMyAdmin SQL Dump
 -- version 5.2.3
 -- https://www.phpmyadmin.net/

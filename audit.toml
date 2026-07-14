@@ -1,2 +1,11 @@
+# GC-Stats — API
+#
+# cargo-audit configuration: advisories intentionally ignored, with
+# justification.
+#
+# Copyright (c) 2026 Alice Alleman — GC-Stats-API
+# License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+# Repository: https://github.com/GC-Stats/API
+
 [ignore]
 RUSTSEC-2023-0071 = { reason = "Used only for MySQL auth in sqlx, not for sensitive crypto operations. No fix available upstream." }

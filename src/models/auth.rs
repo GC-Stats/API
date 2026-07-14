@@ -1,3 +1,14 @@
+/*
+    GC-Stats — API
+
+    API key model and the SHA-256 hashing helper used to store and look up
+    keys without persisting them in plaintext.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use serde::{Serialize, Deserialize};
 use sha2::{Digest, Sha256};
 use sqlx::FromRow;

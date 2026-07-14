@@ -1,3 +1,14 @@
+/*
+    GC-Stats — API
+
+    `/v1/map` endpoints: fetch a map's full details (teams, player stats)
+    and its per-round breakdown.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
 use std::collections::{BTreeMap, HashSet};
 use axum::{extract::{Path, State}, Json, http::StatusCode, Router};
 use std::sync::Arc;
