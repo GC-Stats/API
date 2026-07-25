@@ -35,9 +35,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Security Audit
-        uses: rustsec/audit-check@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions-rust-lang/audit@v1
 
       - name: Install SQLx CLI
         run: cargo install sqlx-cli --no-default-features --features native-tls,mysql
