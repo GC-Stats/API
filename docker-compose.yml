@@ -9,54 +9,14 @@
 # Repository: https://github.com/GC-Stats/API
 
 services:
-  gc_prod_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: gc_prod_api
+  gcs_api:
+    image: ghcr.io/gc-stats/website:latest
+    container_name: gcs_api
     env_file: .env
     restart: always
     networks:
-      - gc_production_network
-      - monitoring
-      - proxy
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://loki:3100/loki/api/v1/push"
-        labels: "service=gc_prod_api"
-        loki-timeout: "2s"
-        loki-retries: "3"
-        loki-batch-wait: "1s"
-    stop_grace_period: 10s
-
-  gc_preprod_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: gc_preprod_api
-    env_file: .env
-    restart: always
-    networks:
-      - gc_preprod_network
-      - monitoring
-      - proxy
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://loki:3100/loki/api/v1/push"
-        labels: "service=gc_preprod_api"
-        loki-timeout: "2s"
-        loki-retries: "3"
-        loki-batch-wait: "1s"
-    stop_grace_period: 10s
+      - gcs_network
 
 networks:
-  gc_preprod_network:
-    external: true
-  gc_production_network:
-    external: true
-  monitoring:
-    external: true
-  proxy:
+  gcs_network:
     external: true
