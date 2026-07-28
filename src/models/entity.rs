@@ -244,5 +244,6 @@ mod tests {
 pub struct TeamWithScore {
     #[serde(flatten)]
     pub team: crate::models::entity::Team,
-    pub score: i32,
+
+    pub score: Option<i32>,
 }

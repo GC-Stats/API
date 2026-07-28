@@ -9,11 +9,12 @@
     Repository: https://github.com/GC-Stats/API
 */
 
-use axum::{extract::{Path, State}, Json, http::StatusCode, Router};
+use axum::{extract::{Path, Query, State}, Json, http::StatusCode, Router};
 use std::sync::Arc;
 use axum::routing::get;
 use crate::AppState;
 use crate::models::entity::{fetch_current_logo_ids, parse_socials, partition_logo_history, Player, PlayerFullResponse, PlayerTeamHistory, Team, LogoUrls, LogoRow, LogoHistoryResponse};
+use crate::models::stats::{fetch_player_agent_stats, fetch_stats, fetch_weapon_stats, AgentStatsEntry, AvgStatsResponse, EntityKind, StatsQuery, WeaponStatsEntry};
 use crate::util::escape_like;
 
 pub fn router() -> Router<Arc<AppState>> {
@@ -22,6 +23,9 @@ pub fn router() -> Router<Arc<AppState>> {
         .route("/{id}", get(get_player))
         .route("/{id}/teams", get(get_player_teams))
         .route("/{id}/photos", get(get_player_photos))
+        .route("/{id}/stats", get(get_player_stats))
+        .route("/{id}/agents", get(get_player_agents))
+        .route("/{id}/weapons", get(get_player_weapons))
 }
 
 #[utoipa::path(
@@ -59,7 +63,7 @@ pub async fn get_player_by_name(
         "#,
         search_pattern
     )
-        .fetch_all(&state.db)
+        .fetch_all(&state.db_read)
         .await
         .map_err(|e| {
             tracing::error!("DB error on players by-name: {:?}", e);
@@ -67,7 +71,7 @@ pub async fn get_player_by_name(
         })?;
 
     let player_ids: Vec<u64> = rows.iter().map(|r| r.id).collect();
-    let mut photo_ids = fetch_current_logo_ids(&state.db, "player", &player_ids).await;
+    let mut photo_ids = fetch_current_logo_ids(&state.db_read, "player", &player_ids).await;
 
     let players = rows.into_iter()
         .map(|row| {
@@ -134,7 +138,7 @@ pub async fn get_player(
         "#,
         id
     )
-        .fetch_optional(&state.db)
+        .fetch_optional(&state.db_read)
         .await
         .map_err(|e| {
             tracing::error!("DB error on player by id: {:?}", e);
@@ -165,7 +169,7 @@ pub async fn get_player(
         row.team_active,
     ));
 
-    let photo = fetch_current_logo_ids(&state.db, "player", &[id])
+    let photo = fetch_current_logo_ids(&state.db_read, "player", &[id])
         .await
         .remove(&id)
         .map(|uuid| LogoUrls::build("players", &uuid));
@@ -192,7 +196,7 @@ pub async fn get_player_teams(
 
     let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM players WHERE id = ?)")
         .bind(id)
-        .fetch_one(&state.db)
+        .fetch_one(&state.db_read)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     if !exists {
@@ -216,7 +220,7 @@ pub async fn get_player_teams(
         "#,
         id
     )
-        .fetch_all(&state.db)
+        .fetch_all(&state.db_read)
         .await
         .map_err(|e| {
             tracing::error!("DB error on player team history: {:?}", e);
@@ -253,7 +257,7 @@ pub async fn get_player_photos(
 ) -> Result<Json<LogoHistoryResponse>, StatusCode> {
     let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM players WHERE id = ?)")
         .bind(id)
-        .fetch_one(&state.db)
+        .fetch_one(&state.db_read)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     if !exists {
@@ -264,7 +268,7 @@ pub async fn get_player_photos(
         "SELECT id, `from`, until FROM logos WHERE entity_type = 'player' AND entity_id = ? ORDER BY `from` DESC"
     )
         .bind(id)
-        .fetch_all(&state.db)
+        .fetch_all(&state.db_read)
         .await
         .map_err(|e| {
             tracing::error!("DB error on player photos: {:?}", e);
@@ -272,4 +276,103 @@ pub async fn get_player_photos(
         })?;
 
     Ok(Json(partition_logo_history(rows, "players")))
+}
+
+#[utoipa::path(
+    get,
+    path = "/v1/players/{id}/stats",
+    params(StatsQuery),
+    responses(
+        (status = 200, description = "Average stats for the player, always broken down by side (atk/def)", body = AvgStatsResponse),
+        (status = 404, description = "Player not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 429, description = "Rate limited"),
+    ),
+    tag = "Players"
+)]
+
+pub async fn get_player_stats(
+    Path(id): Path<u64>,
+    Query(filters): Query<StatsQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<AvgStatsResponse>, StatusCode> {
+    let response = fetch_stats(&state.db_read, EntityKind::Player, id, &filters)
+        .await
+        .map_err(|e| {
+            tracing::error!("DB error on player stats: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    Ok(Json(response))
+}
+
+#[utoipa::path(
+    get,
+    path = "/v1/players/{id}/agents",
+    responses(
+        (status = 200, description = "Per-agent stats and pickrate for the player", body = [AgentStatsEntry]),
+        (status = 404, description = "Player not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 429, description = "Rate limited"),
+    ),
+    tag = "Players"
+)]
+
+pub async fn get_player_agents(
+    Path(id): Path<u64>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<AgentStatsEntry>>, StatusCode> {
+    let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM players WHERE id = ?)")
+        .bind(id)
+        .fetch_one(&state.db_read)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if !exists {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    let agents = fetch_player_agent_stats(&state.db_read, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("DB error on player agents: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(Json(agents))
+}
+
+#[utoipa::path(
+    get,
+    path = "/v1/players/{id}/weapons",
+    responses(
+        (status = 200, description = "Weapon usage for the player: rounds held (when known) and kills landed", body = [WeaponStatsEntry]),
+        (status = 404, description = "Player not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 429, description = "Rate limited"),
+    ),
+    tag = "Players"
+)]
+
+pub async fn get_player_weapons(
+    Path(id): Path<u64>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<WeaponStatsEntry>>, StatusCode> {
+    let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM players WHERE id = ?)")
+        .bind(id)
+        .fetch_one(&state.db_read)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if !exists {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    let weapons = fetch_weapon_stats(&state.db_read, EntityKind::Player, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("DB error on player weapons: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(Json(weapons))
 }

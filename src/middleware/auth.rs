@@ -97,7 +97,7 @@ pub async fn mw_rate_limiter(
             "SELECT id, client_name, rate_limit, is_active FROM api_key WHERE key_hash = ? AND is_active = 1"
         )
             .bind(&key_hash)
-            .fetch_optional(&state.db)
+            .fetch_optional(&state.db_read)
             .await
         {
             Ok(Some(k)) => k,

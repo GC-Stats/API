@@ -44,7 +44,7 @@ pub async fn get_map(
         r#"
         SELECT
             m.id, m.match_id, m.api_match_id, m.map_name,
-            m.team_a_score as "team_a_score!", m.team_b_score as "team_b_score!", m.order as map_order, m.is_completed,
+            m.team_a_score, m.team_b_score, m.order as map_order, m.is_completed,
 
             -- Team A
             ta.id as "ta_id?", ta.name as "ta_name?", ta.short_name as "ta_short_name?",
@@ -78,7 +78,7 @@ pub async fn get_map(
         "#,
         id
     )
-        .fetch_all(&state.db)
+        .fetch_all(&state.db_read)
         .await
         .map_err(|e| {
             tracing::error!("DB error on map by id: {:?}", e);
@@ -184,7 +184,7 @@ pub async fn get_map_rounds(
 
     let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM game_maps WHERE id = ?)")
         .bind(id)
-        .fetch_one(&state.db)
+        .fetch_one(&state.db_read)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     if !exists {
@@ -205,7 +205,7 @@ pub async fn get_map_rounds(
         "#,
         id
     )
-        .fetch_all(&state.db)
+        .fetch_all(&state.db_read)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 

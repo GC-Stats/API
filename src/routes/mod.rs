@@ -14,7 +14,6 @@ use axum::Router;
 use crate::AppState;
 
 pub mod health;
-pub mod dashboard;
 pub mod teams;
 pub mod players;
 pub mod tournaments;
@@ -28,4 +27,9 @@ pub fn api_router_v1() -> Router<Arc<AppState>> {
         .nest("/tournaments", tournaments::router())
         .nest("/matches", matches::router())
         .nest("/map", map::router())
+}
+
+pub fn api_router_v2() -> Router<Arc<AppState>> {
+    Router::new()
+        .nest("/matches", matches::router_v2())
 }

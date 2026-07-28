@@ -134,6 +134,6 @@ async fn insert_chunk(state: &Arc<AppState>, chunk: &[crate::middleware::logging
             .push_bind(entry.created_at.naive_utc());
     });
 
-    builder.build().execute(&state.db).await?;
+    builder.build().execute(&state.db_write).await?;
     Ok(())
 }

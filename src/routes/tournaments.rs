@@ -63,7 +63,7 @@ pub async fn get_tournament_by_name(
         "#,
         search_pattern
     )
-        .fetch_all(&state.db)
+        .fetch_all(&state.db_read)
         .await
         .map_err(|e| {
             tracing::error!("DB error on tournaments by-name: {:?}", e);
@@ -115,7 +115,7 @@ pub async fn get_tournament_by_name(
     }
 
     let tournament_ids: Vec<u64> = tournaments.iter().map(|t| t.tournament.id).collect();
-    let mut logo_ids = fetch_current_logo_ids(&state.db, "tournament", &tournament_ids).await;
+    let mut logo_ids = fetch_current_logo_ids(&state.db_read, "tournament", &tournament_ids).await;
 
     for t in &mut tournaments {
         t.logo = logo_ids.remove(&t.tournament.id).map(|uuid| LogoUrls::build("tournaments", &uuid));
@@ -166,7 +166,7 @@ pub async fn get_tournament(
         "#,
         id
     )
-        .fetch_all(&state.db)
+        .fetch_all(&state.db_read)
         .await
         .map_err(|e| {
             tracing::error!("DB error on tournament by id: {:?}", e);
@@ -211,7 +211,7 @@ pub async fn get_tournament(
         })
         .collect();
 
-    let logo = fetch_current_logo_ids(&state.db, "tournament", &[id])
+    let logo = fetch_current_logo_ids(&state.db_read, "tournament", &[id])
         .await
         .remove(&id)
         .map(|uuid| LogoUrls::build("tournaments", &uuid));
@@ -238,7 +238,7 @@ pub async fn get_tournament_logos(
         "SELECT id, `from`, until FROM logos WHERE entity_type = 'tournament' AND entity_id = ? ORDER BY `from` DESC"
     )
         .bind(id)
-        .fetch_all(&state.db)
+        .fetch_all(&state.db_read)
         .await
         .map_err(|e| {
             tracing::error!("DB error on tournament logos: {:?}", e);

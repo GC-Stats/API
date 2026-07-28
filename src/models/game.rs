@@ -51,9 +51,9 @@ pub struct GameMap {
 
     pub api_match_id: Option<String>,
     pub map_name: String,
-
-    pub team_a_score: i32,
-    pub team_b_score: i32,
+    
+    pub team_a_score: Option<i32>,
+    pub team_b_score: Option<i32>,
 
     pub order: i32,
 

@@ -2,7 +2,7 @@
     GC-Stats — API
 
     Application entrypoint. Loads configuration, connects to MariaDB and
-    Redis, builds the Axum router (health check, dashboard, versioned `/v1`
+    Redis, builds the Axum router (health check, versioned `/v1`
     API, Swagger UI) and starts the HTTP server.
 
     Copyright (c) 2026 Alice Alleman — GC-Stats-API
@@ -23,13 +23,11 @@ use sqlx::mysql::MySqlPoolOptions;
 use dotenvy::dotenv;
 use std::env;
 use axum::http::{header, HeaderValue, Method};
-use cookie::Key;
 use utoipa_swagger_ui::{SwaggerUi};
 use crate::doc::ApiDoc;
 use utoipa::OpenApi;
 use tower_http::trace::{TraceLayer, DefaultMakeSpan, DefaultOnResponse};
 use tower_http::cors::{CorsLayer, Any};
-use tower_http::services::ServeDir;
 use tower_http::normalize_path::NormalizePathLayer;
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower::Layer;
@@ -38,10 +36,24 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tracing::Level;
 
 pub struct AppState {
-    pub db: sqlx::MySqlPool,
+    pub db_read: sqlx::MySqlPool,
+    pub db_write: sqlx::MySqlPool,
     pub redis: redis::aio::ConnectionManager,
     pub redis_local: redis::aio::ConnectionManager,
-    pub cookie_key: Key,
+}
+
+async fn connect_pool(database_url: &str, max_connections: u32) -> sqlx::MySqlPool {
+    MySqlPoolOptions::new()
+        .max_connections(max_connections)
+        .after_connect(|conn, _meta| Box::pin(async move {
+            sqlx::query("SET SESSION group_concat_max_len = 1048576")
+                .execute(&mut *conn)
+                .await?;
+            Ok(())
+        }))
+        .connect(database_url)
+        .await
+        .expect("Failed to connect to MariaDB")
 }
 
 #[tokio::main]
@@ -65,19 +77,15 @@ async fn main() {
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(10);
-    let pool = MySqlPoolOptions::new()
-        .max_connections(max_connections)
-        // GROUP_CONCAT defaults to 1024 chars, which silently truncates the
-        // aggregated match id lists on the tournament endpoints.
-        .after_connect(|conn, _meta| Box::pin(async move {
-            sqlx::query("SET SESSION group_concat_max_len = 1048576")
-                .execute(&mut *conn)
-                .await?;
-            Ok(())
-        }))
-        .connect(&database_url)
-        .await
-        .expect("Failed to connect to MariaDB");
+
+    // Single-instance mode: DATABASE_URL serves both reads and writes.
+    // Multi-AZ mode: set DATABASE_URL_WRITE to point writes at the primary
+    // while DATABASE_URL targets a read replica.
+    let db_read = connect_pool(&database_url, max_connections).await;
+    let db_write = match env::var("DATABASE_URL_WRITE") {
+        Ok(write_url) => connect_pool(&write_url, max_connections).await,
+        Err(_) => db_read.clone(),
+    };
 
     let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL missing");
     let client = redis::Client::open(redis_url).expect("Invalid Redis URL");
@@ -95,19 +103,11 @@ async fn main() {
         .await
         .expect("Failed to connect to local Redis");
 
-    let cookie_secret = std::env::var("DASHBOARD_COOKIE_SECRET")
-        .expect("DASHBOARD_COOKIE_SECRET missing");
-    assert!(
-        cookie_secret.len() >= 32,
-        "DASHBOARD_COOKIE_SECRET must be at least 32 bytes (64+ recommended)"
-    );
-    let cookie_key = Key::derive_from(cookie_secret.as_bytes());
-
     let shared_state = std::sync::Arc::new(AppState {
-        db: pool,
+        db_read,
+        db_write,
         redis: redis_manager,
         redis_local: redis_local_manager,
-        cookie_key,
     });
 
     tokio::spawn(logging::flusher::run(shared_state.clone()));
@@ -131,10 +131,20 @@ async fn main() {
 
     let inner = Router::new()
         .route("/health", get(routes::health::health_check))
-        .nest_service("/assets", ServeDir::new("assets"))
-        .merge(routes::dashboard::router())
 
         .nest("/v1", routes::api_router_v1().layer(
+            ax_middleware::from_fn_with_state(
+                shared_state.clone(),
+                middleware::auth::mw_rate_limiter
+            )
+        ).layer(
+            ax_middleware::from_fn_with_state(
+                shared_state.clone(),
+                middleware::logging::mw_request_logger
+            )
+        ))
+
+        .nest("/v2", routes::api_router_v2().layer(
             ax_middleware::from_fn_with_state(
                 shared_state.clone(),
                 middleware::auth::mw_rate_limiter
