@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "\n        SELECT id, match_id, api_match_id, map_name,\n               team_a_score as \"team_a_score!\", team_b_score as \"team_b_score!\", `order`, is_completed\n        FROM game_maps\n        WHERE match_id = ?\n        ORDER BY `order` ASC\n        ",
+  "query": "\n        SELECT id, match_id, api_match_id, map_name,\n               team_a_score as \"team_a_score?\", team_b_score as \"team_b_score?\", `order`, is_completed\n        FROM game_maps\n        WHERE match_id = ?\n        ORDER BY `order` ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -41,7 +41,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "UNIQUE_KEY",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -57,7 +57,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -69,7 +69,7 @@
       },
       {
         "ordinal": 4,
-        "name": "team_a_score!",
+        "name": "team_a_score?",
         "type_info": {
           "type": "Long",
           "flags": "",
@@ -85,7 +85,7 @@
       },
       {
         "ordinal": 5,
-        "name": "team_b_score!",
+        "name": "team_b_score?",
         "type_info": {
           "type": "Long",
           "flags": "",
@@ -146,5 +146,5 @@
       false
     ]
   },
-  "hash": "bf1871bd60dd2137dff149e8b7bd157ca6127f38dda9cafdb624f0b89bb790eb"
+  "hash": "ad3a045bcf8cbfc54d65e09f715a83f9ef3d2a904cf87cbe3ca68ebaf029fd1e"
 }

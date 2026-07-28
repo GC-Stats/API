@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "\n        SELECT\n            m.id, m.match_id, m.api_match_id, m.map_name,\n            m.team_a_score as \"team_a_score!\", m.team_b_score as \"team_b_score!\", m.order as map_order, m.is_completed,\n\n            -- Team A\n            ta.id as \"ta_id?\", ta.name as \"ta_name?\", ta.short_name as \"ta_short_name?\",\n            ta.country_code as \"ta_country_code?\", ta.bio as \"ta_bio?\",\n            ta.socials as \"ta_socials?\", ta.vlr_id as \"ta_vlr_id?\", ta.is_active as \"ta_is_active?\",\n\n            -- Team B\n            tb.id as \"tb_id?\", tb.name as \"tb_name?\", tb.short_name as \"tb_short_name?\",\n            tb.country_code as \"tb_country_code?\", tb.bio as \"tb_bio?\",\n            tb.socials as \"tb_socials?\", tb.vlr_id as \"tb_vlr_id?\", tb.is_active as \"tb_is_active?\",\n\n            -- Game Player Stats\n            gps.id as \"player_stats_id?\",\n            gps.player_id as \"player_id?\", gps.team_id as \"team_id?\",\n            gps.agent_name as \"agent_name?\", gps.kills as \"player_kills?\",\n            gps.deaths as \"player_deaths?\", gps.assists as \"player_assists?\",\n            gps.acs as \"player_acs?\", gps.adr as \"player_adr?\",\n            gps.first_kills as \"player_first_kills?\", gps.first_deaths as \"player_first_deaths?\",\n\n            CAST(gps.kast_percentage AS DOUBLE) as \"player_kast?\",\n            CAST(gps.headshot_percentage AS DOUBLE) as \"player_hs?\"\n\n\n        FROM game_maps m\n        LEFT JOIN matches ma ON m.match_id = ma.id\n        LEFT JOIN teams ta ON ma.team_a_id = ta.id\n        LEFT JOIN teams tb ON ma.team_b_id = tb.id\n        LEFT JOIN game_player_stats gps ON m.id = gps.game_map_id\n        WHERE m.id = ?\n        ORDER BY gps.id ASC\n        ",
+  "query": "\n        SELECT\n            m.id, m.match_id, m.api_match_id, m.map_name,\n            m.team_a_score as \"team_a_score?\", m.team_b_score as \"team_b_score?\", m.order as map_order, m.is_completed,\n\n            -- Team A\n            ta.id as \"ta_id?\", ta.name as \"ta_name?\", ta.short_name as \"ta_short_name?\",\n            ta.country_code as \"ta_country_code?\", ta.bio as \"ta_bio?\",\n            ta.socials as \"ta_socials?\", ta.vlr_id as \"ta_vlr_id?\", ta.is_active as \"ta_is_active?\",\n\n            -- Team B\n            tb.id as \"tb_id?\", tb.name as \"tb_name?\", tb.short_name as \"tb_short_name?\",\n            tb.country_code as \"tb_country_code?\", tb.bio as \"tb_bio?\",\n            tb.socials as \"tb_socials?\", tb.vlr_id as \"tb_vlr_id?\", tb.is_active as \"tb_is_active?\",\n\n            -- Game Player Stats\n            gps.id as \"player_stats_id?\",\n            gps.player_id as \"player_id?\", gps.team_id as \"team_id?\",\n            gps.agent_name as \"agent_name?\", gps.kills as \"player_kills?\",\n            gps.deaths as \"player_deaths?\", gps.assists as \"player_assists?\",\n            gps.acs as \"player_acs?\", gps.adr as \"player_adr?\",\n            gps.first_kills as \"player_first_kills?\", gps.first_deaths as \"player_first_deaths?\",\n\n            CAST(gps.kast_percentage AS DOUBLE) as \"player_kast?\",\n            CAST(gps.headshot_percentage AS DOUBLE) as \"player_hs?\"\n\n\n        FROM game_maps m\n        LEFT JOIN matches ma ON m.match_id = ma.id\n        LEFT JOIN teams ta ON ma.team_a_id = ta.id\n        LEFT JOIN teams tb ON ma.team_b_id = tb.id\n        LEFT JOIN game_player_stats gps ON m.id = gps.game_map_id\n        WHERE m.id = ?\n        ORDER BY gps.id ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -41,7 +41,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "UNIQUE_KEY",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -57,7 +57,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -69,7 +69,7 @@
       },
       {
         "ordinal": 4,
-        "name": "team_a_score!",
+        "name": "team_a_score?",
         "type_info": {
           "type": "Long",
           "flags": "",
@@ -85,7 +85,7 @@
       },
       {
         "ordinal": 5,
-        "name": "team_b_score!",
+        "name": "team_b_score?",
         "type_info": {
           "type": "Long",
           "flags": "",
@@ -153,7 +153,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -169,7 +169,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 40
         },
         "origin": {
@@ -185,7 +185,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 12
         },
         "origin": {
@@ -201,7 +201,7 @@
         "type_info": {
           "type": "Blob",
           "flags": "BLOB",
-          "collation": 255,
+          "collation": 224,
           "max_size": 262140
         },
         "origin": {
@@ -216,8 +216,8 @@
         "name": "ta_socials?",
         "type_info": {
           "type": "Blob",
-          "flags": "BLOB | BINARY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "flags": "BLOB | BINARY",
+          "collation": 224,
           "max_size": 4294967295
         },
         "origin": {
@@ -281,7 +281,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -297,7 +297,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 40
         },
         "origin": {
@@ -313,7 +313,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 12
         },
         "origin": {
@@ -329,7 +329,7 @@
         "type_info": {
           "type": "Blob",
           "flags": "BLOB",
-          "collation": 255,
+          "collation": 224,
           "max_size": 262140
         },
         "origin": {
@@ -344,8 +344,8 @@
         "name": "tb_socials?",
         "type_info": {
           "type": "Blob",
-          "flags": "BLOB | BINARY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "flags": "BLOB | BINARY",
+          "collation": 224,
           "max_size": 4294967295
         },
         "origin": {
@@ -441,7 +441,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -570,7 +570,7 @@
           "type": "Double",
           "flags": "BINARY",
           "collation": 63,
-          "max_size": 23
+          "max_size": 22
         },
         "origin": "Expression"
       },
@@ -581,7 +581,7 @@
           "type": "Double",
           "flags": "BINARY",
           "collation": 63,
-          "max_size": 23
+          "max_size": 22
         },
         "origin": "Expression"
       }
@@ -629,5 +629,5 @@
       true
     ]
   },
-  "hash": "3f09504feaf453d0944db862888a7d89feceb0f38edcbc2860bedf7b2c75f696"
+  "hash": "b4e0e2918c3965faeca9ecc151108d8b3f9832db8e66a788bdb17f183c20b1a7"
 }

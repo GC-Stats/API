@@ -25,7 +25,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | MULTIPLE_KEY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -41,7 +41,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -57,7 +57,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -73,7 +73,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 12
         },
         "origin": {
@@ -89,7 +89,7 @@
         "type_info": {
           "type": "Blob",
           "flags": "BLOB",
-          "collation": 255,
+          "collation": 224,
           "max_size": 262140
         },
         "origin": {
@@ -104,8 +104,8 @@
         "name": "socials",
         "type_info": {
           "type": "Blob",
-          "flags": "NOT_NULL | BLOB | BINARY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "flags": "NOT_NULL | BLOB | BINARY",
+          "collation": 224,
           "max_size": 4294967295
         },
         "origin": {
@@ -169,7 +169,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -185,7 +185,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 40
         },
         "origin": {
@@ -201,7 +201,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 12
         },
         "origin": {
@@ -216,8 +216,8 @@
         "name": "team_socials",
         "type_info": {
           "type": "Blob",
-          "flags": "BLOB | BINARY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "flags": "BLOB | BINARY",
+          "collation": 224,
           "max_size": 4294967295
         },
         "origin": {
@@ -233,7 +233,7 @@
         "type_info": {
           "type": "Blob",
           "flags": "BLOB",
-          "collation": 255,
+          "collation": 224,
           "max_size": 262140
         },
         "origin": {

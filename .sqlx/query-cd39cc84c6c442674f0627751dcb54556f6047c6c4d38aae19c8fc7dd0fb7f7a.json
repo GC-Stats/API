@@ -21,11 +21,27 @@
       },
       {
         "ordinal": 1,
+        "name": "user_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "UNIQUE_KEY | UNSIGNED",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
         "name": "handle",
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | MULTIPLE_KEY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -36,12 +52,12 @@
         }
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
         "name": "first_name",
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -52,12 +68,12 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "last_name",
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -68,12 +84,12 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "country_code",
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 12
         },
         "origin": {
@@ -84,12 +100,12 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "bio",
         "type_info": {
           "type": "Blob",
           "flags": "BLOB",
-          "collation": 255,
+          "collation": 224,
           "max_size": 262140
         },
         "origin": {
@@ -100,12 +116,12 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "socials",
         "type_info": {
           "type": "Blob",
-          "flags": "NOT_NULL | BLOB | BINARY | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "flags": "NOT_NULL | BLOB | BINARY",
+          "collation": 224,
           "max_size": 4294967295
         },
         "origin": {
@@ -116,12 +132,12 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "discord_id",
         "type_info": {
           "type": "VarString",
           "flags": "UNIQUE_KEY",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -132,12 +148,12 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "val_id",
         "type_info": {
           "type": "VarString",
           "flags": "UNIQUE_KEY",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -148,7 +164,23 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
+        "name": "esports_val_id",
+        "type_info": {
+          "type": "VarString",
+          "flags": "UNIQUE_KEY",
+          "collation": 224,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "gc.players",
+            "name": "esports_val_id"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
         "name": "vlr_id",
         "type_info": {
           "type": "Long",
@@ -164,12 +196,12 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 12,
         "name": "liquipedia_link",
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -180,7 +212,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 13,
         "name": "is_active",
         "type_info": {
           "type": "Tiny",
@@ -196,11 +228,11 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 14,
         "name": "created_at",
         "type_info": {
           "type": "Timestamp",
-          "flags": "BINARY",
+          "flags": "UNSIGNED | BINARY",
           "collation": 63,
           "max_size": 19
         },
@@ -212,11 +244,11 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 15,
         "name": "updated_at",
         "type_info": {
           "type": "Timestamp",
-          "flags": "BINARY",
+          "flags": "UNSIGNED | BINARY",
           "collation": 63,
           "max_size": 19
         },
@@ -228,7 +260,7 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 16,
         "name": "left_at",
         "type_info": {
           "type": "Date",
@@ -249,12 +281,14 @@
     },
     "nullable": [
       false,
-      false,
-      true,
-      true,
-      true,
       true,
       false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
       true,
       true,
       true,

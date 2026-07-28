@@ -25,7 +25,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -41,7 +41,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -57,7 +57,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -73,7 +73,7 @@
         "type_info": {
           "type": "Blob",
           "flags": "BLOB",
-          "collation": 255,
+          "collation": 224,
           "max_size": 262140
         },
         "origin": {
@@ -89,7 +89,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -105,7 +105,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -153,7 +153,7 @@
         "type_info": {
           "type": "String",
           "flags": "NOT_NULL | ENUM",
-          "collation": 255,
+          "collation": 224,
           "max_size": 32
         },
         "origin": {
@@ -185,7 +185,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -201,7 +201,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -231,10 +231,10 @@
         "ordinal": 14,
         "name": "phase_match_ids?",
         "type_info": {
-          "type": "LongBlob",
+          "type": "Blob",
           "flags": "",
-          "collation": 255,
-          "max_size": 65536
+          "collation": 224,
+          "max_size": 16777216
         },
         "origin": "Expression"
       }

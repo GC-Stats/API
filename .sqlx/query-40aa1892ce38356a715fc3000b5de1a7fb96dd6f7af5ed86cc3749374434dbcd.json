@@ -57,7 +57,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -169,7 +169,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "MULTIPLE_KEY",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {
@@ -185,7 +185,7 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
-          "collation": 255,
+          "collation": 224,
           "max_size": 1020
         },
         "origin": {

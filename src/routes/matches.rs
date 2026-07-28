@@ -72,7 +72,7 @@ pub async fn get_match(
     let maps_query = sqlx::query!(
         r#"
         SELECT id, match_id, api_match_id, map_name,
-               team_a_score, team_b_score, `order`, is_completed
+               team_a_score as "team_a_score?", team_b_score as "team_b_score?", `order`, is_completed
         FROM game_maps
         WHERE match_id = ?
         ORDER BY `order` ASC
