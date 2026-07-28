@@ -895,7 +895,7 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, tournament_id: Option
             .unwrap_or((SideWinrate::from_counts(0, 0), SideWinrate::from_counts(0, 0)));
 
         let mut comps = comps_by_map.remove(&totals.map_name).unwrap_or_default();
-        comps.sort_by(|a, b| b.times_played.cmp(&a.times_played));
+        comps.sort_by_key(|c| std::cmp::Reverse(c.times_played));
 
         TeamMapEntry {
             map_name: totals.map_name,
@@ -909,7 +909,7 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, tournament_id: Option
         }
     }).collect();
 
-    result.sort_by(|a, b| b.times_played.cmp(&a.times_played));
+    result.sort_by_key(|r| std::cmp::Reverse(r.times_played));
 
     Ok(result)
 }
