@@ -42,7 +42,7 @@ The easiest way to get started without installing Rust or MySQL locally.
 
 3. **Launch it via Docker**
    ```bash
-   docker compose up -d gc_production_api
+   docker compose up -d 
    ```
 
 > [!WARNING]
