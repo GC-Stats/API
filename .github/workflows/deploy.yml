@@ -36,10 +36,10 @@ jobs:
           VERSION="${INPUT_VERSION:-$SHORT_SHA}"
 
           if [ "${{ inputs.environment }}" = "prod" ]; then
-            echo "tags=ghcr.io/gc-stats/website:latest,ghcr.io/gc-stats/website:${VERSION}" >> $GITHUB_OUTPUT
+            echo "tags=ghcr.io/gc-stats/api:latest,ghcr.io/gc-stats/api:${VERSION}" >> $GITHUB_OUTPUT
             echo "image-tag=latest" >> $GITHUB_OUTPUT
           else
-            echo "tags=ghcr.io/gc-stats/website:preprod" >> $GITHUB_OUTPUT
+            echo "tags=ghcr.io/gc-stats/api:preprod" >> $GITHUB_OUTPUT
             echo "image-tag=preprod" >> $GITHUB_OUTPUT
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT

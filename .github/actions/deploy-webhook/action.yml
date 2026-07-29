@@ -7,7 +7,7 @@ inputs:
     description: Server identifier (e.g. gcs-eu-server-01), used to build the deploy hostname
   hook-id:
     required: true
-    description: Webhook hook ID (e.g. gcs-website)
+    description: Webhook hook ID (e.g. gcs-api)
   secret:
     required: true
     description: HMAC secret for the webhook signature
@@ -37,7 +37,7 @@ runs:
       run: |
         set -euo pipefail
 
-        PAYLOAD=$(printf '{"ref":"refs/heads/main","service":"%s","tag":"%s"}' "website" "$IMAGE_TAG")
+        PAYLOAD=$(printf '{"ref":"refs/heads/main","service":"%s","tag":"%s"}' "api" "$IMAGE_TAG")
         SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SECRET" | cut -d' ' -f2)
 
         echo "::group::Deploying ${VERSION} to ${SERVER}"
