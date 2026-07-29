@@ -68,39 +68,51 @@ pub struct StatsQuery {
 #[derive(Debug, Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct MapsQuery {
+    /// Only include maps from matches scheduled on/after this date.
+    pub from: Option<NaiveDate>,
+    /// Only include maps from matches scheduled on/before this date.
+    pub to: Option<NaiveDate>,
     /// Scope maps + comps to a single tournament instead of all-time.
     pub tournament_id: Option<u64>,
 }
 
-fn push_common_filters(qb: &mut QueryBuilder<MySql>, filters: &StatsQuery, tournament_column: &str) {
-    if let Some(from) = filters.from {
-        qb.push(" AND m.scheduled_at >= ").push_bind(from);
+/// `to` is a calendar date but the column is a datetime, so the upper bound
+/// is exclusive of the following day to include all of `to` itself.
+fn push_date_range_filter(qb: &mut QueryBuilder<MySql>, date_column: &str, from: Option<NaiveDate>, to: Option<NaiveDate>) {
+    if let Some(from) = from {
+        qb.push(format!(" AND {date_column} >= ")).push_bind(from);
     }
-    if let Some(to) = filters.to {
-        qb.push(" AND m.scheduled_at <= ").push_bind(to);
+    if let Some(to) = to {
+        let exclusive_upper_bound = to.succ_opt().unwrap_or(to);
+        qb.push(format!(" AND {date_column} < ")).push_bind(exclusive_upper_bound);
     }
-    if let Some(agent) = &filters.agent {
-        qb.push(" AND gps.agent_name = ").push_bind(agent.clone());
-    }
-    if let Some(tournament_id) = filters.tournament_id {
+}
+
+fn push_tournament_filter(qb: &mut QueryBuilder<MySql>, tournament_column: &str, tournament_id: Option<u64>) {
+    if let Some(tournament_id) = tournament_id {
         qb.push(format!(" AND {tournament_column} = "));
         qb.push_bind(tournament_id);
     }
+}
+
+fn push_maps_filters(qb: &mut QueryBuilder<MySql>, filters: &MapsQuery, date_column: &str, tournament_column: &str) {
+    push_date_range_filter(qb, date_column, filters.from, filters.to);
+    push_tournament_filter(qb, tournament_column, filters.tournament_id);
+}
+
+fn push_common_filters(qb: &mut QueryBuilder<MySql>, filters: &StatsQuery, tournament_column: &str) {
+    push_date_range_filter(qb, "m.scheduled_at", filters.from, filters.to);
+    if let Some(agent) = &filters.agent {
+        qb.push(" AND gps.agent_name = ").push_bind(agent.clone());
+    }
+    push_tournament_filter(qb, tournament_column, filters.tournament_id);
 }
 
 /// Same as `push_common_filters` but for round-only queries that don't join
 /// `game_player_stats`, so there's no `agent` to filter on.
 fn push_round_filters(qb: &mut QueryBuilder<MySql>, filters: &StatsQuery, tournament_column: &str) {
-    if let Some(from) = filters.from {
-        qb.push(" AND m.scheduled_at >= ").push_bind(from);
-    }
-    if let Some(to) = filters.to {
-        qb.push(" AND m.scheduled_at <= ").push_bind(to);
-    }
-    if let Some(tournament_id) = filters.tournament_id {
-        qb.push(format!(" AND {tournament_column} = "));
-        qb.push_bind(tournament_id);
-    }
+    push_date_range_filter(qb, "m.scheduled_at", filters.from, filters.to);
+    push_tournament_filter(qb, tournament_column, filters.tournament_id);
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -688,7 +700,7 @@ struct SideTally {
     def_wins: i64,
 }
 
-pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, tournament_id: Option<u64>) -> Result<Vec<TeamMapEntry>, sqlx::Error> {
+pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, filters: &MapsQuery) -> Result<Vec<TeamMapEntry>, sqlx::Error> {
     let mut map_totals_qb: QueryBuilder<MySql> = QueryBuilder::new(
         r#"
         SELECT
@@ -710,9 +722,7 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, tournament_id: Option
     map_totals_qb.push(" OR m.team_b_id = ");
     map_totals_qb.push_bind(team_id);
     map_totals_qb.push(") AND gm.is_completed = 1");
-    if let Some(t_id) = tournament_id {
-        map_totals_qb.push(" AND m.tournament_id = ").push_bind(t_id);
-    }
+    push_maps_filters(&mut map_totals_qb, filters, "m.scheduled_at", "m.tournament_id");
     map_totals_qb.push(" GROUP BY gm.map_name");
 
     let map_totals: Vec<MapTotalsRow> = map_totals_qb.build_query_as().fetch_all(db).await?;
@@ -738,15 +748,14 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, tournament_id: Option
         r#" THEN 1 ELSE 0 END) AS SIGNED) as def_wins
         FROM game_map_rounds r
         JOIN game_maps gm ON r.game_map_id = gm.id
+        JOIN matches m ON r.match_id = m.id
         WHERE (r.atk_team = "#
     );
     map_sides_qb.push_bind(team_id);
     map_sides_qb.push(" OR r.def_team = ");
     map_sides_qb.push_bind(team_id);
     map_sides_qb.push(")");
-    if let Some(t_id) = tournament_id {
-        map_sides_qb.push(" AND r.tournament_id = ").push_bind(t_id);
-    }
+    push_maps_filters(&mut map_sides_qb, filters, "m.scheduled_at", "r.tournament_id");
     map_sides_qb.push(" GROUP BY gm.map_name");
 
     let map_sides: Vec<MapSideRow> = map_sides_qb.build_query_as().fetch_all(db).await?;
@@ -768,9 +777,7 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, tournament_id: Option
     );
     comp_rows_qb.push_bind(team_id);
     comp_rows_qb.push(" AND gm.is_completed = 1");
-    if let Some(t_id) = tournament_id {
-        comp_rows_qb.push(" AND gps.tournament_id = ").push_bind(t_id);
-    }
+    push_maps_filters(&mut comp_rows_qb, filters, "m.scheduled_at", "gps.tournament_id");
     comp_rows_qb.push(" ORDER BY gps.game_map_id");
 
     let comp_rows: Vec<CompRow> = comp_rows_qb.build_query_as().fetch_all(db).await?;
@@ -779,15 +786,14 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, tournament_id: Option
         r#"
         SELECT r.game_map_id as game_map_id, r.atk_team as atk_team, r.def_team as def_team, r.winning_team as winning_team
         FROM game_map_rounds r
+        JOIN matches m ON r.match_id = m.id
         WHERE (r.atk_team = "#
     );
     round_side_rows_qb.push_bind(team_id);
     round_side_rows_qb.push(" OR r.def_team = ");
     round_side_rows_qb.push_bind(team_id);
     round_side_rows_qb.push(")");
-    if let Some(t_id) = tournament_id {
-        round_side_rows_qb.push(" AND r.tournament_id = ").push_bind(t_id);
-    }
+    push_maps_filters(&mut round_side_rows_qb, filters, "m.scheduled_at", "r.tournament_id");
 
     let round_side_rows: Vec<RoundSideRow> = round_side_rows_qb.build_query_as().fetch_all(db).await?;
 
@@ -915,6 +921,91 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, tournament_id: Option
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+pub struct TeamVetoEntry {
+    pub map_name: String,
+    /// Completed maps actually played by the team, regardless of veto outcome.
+    pub played: i64,
+    pub banned: i64,
+    pub pick: i64,
+    pub decider: i64,
+}
+
+#[derive(Debug, FromRow)]
+struct VetoPlayedRow {
+    map_name: String,
+    played: i64,
+}
+
+#[derive(Debug, FromRow)]
+struct VetoTypeRow {
+    map_name: String,
+    veto_type: String,
+    cnt: i64,
+}
+
+/// Per-map veto behaviour for a team: how often it was played, banned,
+/// picked or left as the decider.
+pub async fn fetch_team_vetos(db: &MySqlPool, team_id: u64, filters: &MapsQuery) -> Result<Vec<TeamVetoEntry>, sqlx::Error> {
+    let mut played_qb: QueryBuilder<MySql> = QueryBuilder::new(
+        "SELECT gm.map_name as map_name, COUNT(*) as played
+        FROM game_maps gm
+        JOIN matches m ON gm.match_id = m.id
+        WHERE (m.team_a_id = "
+    );
+    played_qb.push_bind(team_id);
+    played_qb.push(" OR m.team_b_id = ");
+    played_qb.push_bind(team_id);
+    played_qb.push(") AND gm.is_completed = 1");
+    push_maps_filters(&mut played_qb, filters, "m.scheduled_at", "m.tournament_id");
+    played_qb.push(" GROUP BY gm.map_name");
+
+    let played_rows: Vec<VetoPlayedRow> = played_qb.build_query_as().fetch_all(db).await?;
+
+    let mut veto_qb: QueryBuilder<MySql> = QueryBuilder::new(
+        "SELECT v.map_name as map_name, v.type as veto_type, COUNT(*) as cnt
+        FROM match_vetos v
+        JOIN matches m ON v.match_id = m.id
+        WHERE v.team_id = "
+    );
+    veto_qb.push_bind(team_id);
+    push_maps_filters(&mut veto_qb, filters, "m.scheduled_at", "m.tournament_id");
+    veto_qb.push(" GROUP BY v.map_name, v.type");
+
+    let veto_rows: Vec<VetoTypeRow> = veto_qb.build_query_as().fetch_all(db).await?;
+
+    let mut entries: HashMap<String, TeamVetoEntry> = HashMap::new();
+    for row in played_rows {
+        entries.entry(row.map_name.clone()).or_insert_with(|| TeamVetoEntry {
+            map_name: row.map_name,
+            played: 0,
+            banned: 0,
+            pick: 0,
+            decider: 0,
+        }).played = row.played;
+    }
+    for row in veto_rows {
+        let entry = entries.entry(row.map_name.clone()).or_insert_with(|| TeamVetoEntry {
+            map_name: row.map_name.clone(),
+            played: 0,
+            banned: 0,
+            pick: 0,
+            decider: 0,
+        });
+        match row.veto_type.as_str() {
+            "ban" => entry.banned = row.cnt,
+            "pick" => entry.pick = row.cnt,
+            "decider" => entry.decider = row.cnt,
+            _ => {}
+        }
+    }
+
+    let mut result: Vec<TeamVetoEntry> = entries.into_values().collect();
+    result.sort_by(|a, b| b.played.cmp(&a.played).then_with(|| a.map_name.cmp(&b.map_name)));
+
+    Ok(result)
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct AgentStatsEntry {
     pub agent_name: String,
     /// Maps included below — the denominator for every `avg_*` field and pickrate.
@@ -966,37 +1057,38 @@ struct AgentStatsRow {
 }
 
 /// Per-agent stats and pickrate for a player across all recorded maps.
-pub async fn fetch_player_agent_stats(db: &MySqlPool, player_id: u64) -> Result<Vec<AgentStatsEntry>, sqlx::Error> {
-    let rows: Vec<AgentStatsRow> = sqlx::query_as(
+pub async fn fetch_player_agent_stats(db: &MySqlPool, player_id: u64, filters: &MapsQuery) -> Result<Vec<AgentStatsEntry>, sqlx::Error> {
+    let mut qb: QueryBuilder<MySql> = QueryBuilder::new(
         "SELECT
-            agent_name,
+            gps.agent_name as agent_name,
             COUNT(*) as maps_played,
-            CAST(SUM(kills) AS SIGNED) as total_kills,
-            CAST(AVG(kills) AS DOUBLE) as avg_kills,
-            CAST(SUM(deaths) AS SIGNED) as total_deaths,
-            CAST(AVG(deaths) AS DOUBLE) as avg_deaths,
-            CAST(SUM(assists) AS SIGNED) as total_assists,
-            CAST(AVG(assists) AS DOUBLE) as avg_assists,
-            CAST(SUM(acs) AS SIGNED) as total_acs,
-            CAST(AVG(acs) AS DOUBLE) as avg_acs,
-            CAST(SUM(adr) AS SIGNED) as total_adr,
-            CAST(AVG(adr) AS DOUBLE) as avg_adr,
-            CAST(SUM(kast_percentage) AS DOUBLE) as total_kast,
-            CAST(AVG(kast_percentage) AS DOUBLE) as avg_kast,
-            CAST(SUM(headshot_percentage) AS DOUBLE) as total_hs,
-            CAST(AVG(headshot_percentage) AS DOUBLE) as avg_hs,
-            CAST(SUM(first_kills) AS SIGNED) as total_fk,
-            CAST(AVG(first_kills) AS DOUBLE) as avg_fk,
-            CAST(SUM(first_deaths) AS SIGNED) as total_fd,
-            CAST(AVG(first_deaths) AS DOUBLE) as avg_fd
-         FROM game_player_stats
-         WHERE player_id = ?
-         GROUP BY agent_name
-         ORDER BY maps_played DESC"
-    )
-        .bind(player_id)
-        .fetch_all(db)
-        .await?;
+            CAST(SUM(gps.kills) AS SIGNED) as total_kills,
+            CAST(AVG(gps.kills) AS DOUBLE) as avg_kills,
+            CAST(SUM(gps.deaths) AS SIGNED) as total_deaths,
+            CAST(AVG(gps.deaths) AS DOUBLE) as avg_deaths,
+            CAST(SUM(gps.assists) AS SIGNED) as total_assists,
+            CAST(AVG(gps.assists) AS DOUBLE) as avg_assists,
+            CAST(SUM(gps.acs) AS SIGNED) as total_acs,
+            CAST(AVG(gps.acs) AS DOUBLE) as avg_acs,
+            CAST(SUM(gps.adr) AS SIGNED) as total_adr,
+            CAST(AVG(gps.adr) AS DOUBLE) as avg_adr,
+            CAST(SUM(gps.kast_percentage) AS DOUBLE) as total_kast,
+            CAST(AVG(gps.kast_percentage) AS DOUBLE) as avg_kast,
+            CAST(SUM(gps.headshot_percentage) AS DOUBLE) as total_hs,
+            CAST(AVG(gps.headshot_percentage) AS DOUBLE) as avg_hs,
+            CAST(SUM(gps.first_kills) AS SIGNED) as total_fk,
+            CAST(AVG(gps.first_kills) AS DOUBLE) as avg_fk,
+            CAST(SUM(gps.first_deaths) AS SIGNED) as total_fd,
+            CAST(AVG(gps.first_deaths) AS DOUBLE) as avg_fd
+         FROM game_player_stats gps
+         JOIN matches m ON gps.match_id = m.id
+         WHERE gps.player_id = "
+    );
+    qb.push_bind(player_id);
+    push_maps_filters(&mut qb, filters, "m.scheduled_at", "gps.tournament_id");
+    qb.push(" GROUP BY gps.agent_name ORDER BY maps_played DESC");
+
+    let rows: Vec<AgentStatsRow> = qb.build_query_as().fetch_all(db).await?;
 
     let total: i64 = rows.iter().map(|r| r.maps_played).sum();
 
@@ -1063,51 +1155,68 @@ struct WeaponKillRow {
 /// (`game_map_round_player_stats.weapon_id`) and how many kills were landed
 /// with it (`game_map_round_kills.weapon`). These two counts come from
 /// different data sources and are merged by weapon name — see `times_played`.
-pub async fn fetch_weapon_stats(db: &MySqlPool, kind: EntityKind, id: u64) -> Result<Vec<WeaponStatsEntry>, sqlx::Error> {
+pub async fn fetch_weapon_stats(db: &MySqlPool, kind: EntityKind, id: u64, filters: &MapsQuery) -> Result<Vec<WeaponStatsEntry>, sqlx::Error> {
     let played_rows: Vec<WeaponPlayedRow> = match kind {
-        EntityKind::Player => sqlx::query_as(
-            "SELECT weapon_id as weapon, COUNT(*) as times_played
-             FROM game_map_round_player_stats
-             WHERE player_id = ? AND weapon_id IS NOT NULL
-             GROUP BY weapon_id"
-        )
-            .bind(id)
-            .fetch_all(db)
-            .await?,
-        EntityKind::Team => sqlx::query_as(
-            "SELECT ps.weapon_id as weapon, COUNT(*) as times_played
-             FROM game_map_round_player_stats ps
-             JOIN game_map_rounds r ON ps.game_map_round_id = r.id
-             JOIN game_player_stats gps ON gps.game_map_id = r.game_map_id AND gps.player_id = ps.player_id
-             WHERE gps.team_id = ? AND ps.weapon_id IS NOT NULL
-             GROUP BY ps.weapon_id"
-        )
-            .bind(id)
-            .fetch_all(db)
-            .await?,
+        EntityKind::Player => {
+            let mut qb: QueryBuilder<MySql> = QueryBuilder::new(
+                "SELECT ps.weapon_id as weapon, COUNT(*) as times_played
+                 FROM game_map_round_player_stats ps
+                 JOIN matches m ON ps.match_id = m.id
+                 WHERE ps.player_id = "
+            );
+            qb.push_bind(id);
+            qb.push(" AND ps.weapon_id IS NOT NULL");
+            push_maps_filters(&mut qb, filters, "m.scheduled_at", "ps.tournament_id");
+            qb.push(" GROUP BY ps.weapon_id");
+            qb.build_query_as().fetch_all(db).await?
+        }
+        EntityKind::Team => {
+            let mut qb: QueryBuilder<MySql> = QueryBuilder::new(
+                "SELECT ps.weapon_id as weapon, COUNT(*) as times_played
+                 FROM game_map_round_player_stats ps
+                 JOIN game_map_rounds r ON ps.game_map_round_id = r.id
+                 JOIN game_player_stats gps ON gps.game_map_id = r.game_map_id AND gps.player_id = ps.player_id
+                 JOIN matches m ON ps.match_id = m.id
+                 WHERE gps.team_id = "
+            );
+            qb.push_bind(id);
+            qb.push(" AND ps.weapon_id IS NOT NULL");
+            push_maps_filters(&mut qb, filters, "m.scheduled_at", "ps.tournament_id");
+            qb.push(" GROUP BY ps.weapon_id");
+            qb.build_query_as().fetch_all(db).await?
+        }
     };
 
     let kill_rows: Vec<WeaponKillRow> = match kind {
-        EntityKind::Player => sqlx::query_as(
-            "SELECT weapon, COUNT(*) as kills
-             FROM game_map_round_kills
-             WHERE killer_player_id = ? AND weapon IS NOT NULL
-             GROUP BY weapon"
-        )
-            .bind(id)
-            .fetch_all(db)
-            .await?,
-        EntityKind::Team => sqlx::query_as(
-            "SELECT k.weapon as weapon, COUNT(*) as kills
-             FROM game_map_round_kills k
-             JOIN game_map_rounds r ON k.game_map_round_id = r.id
-             JOIN game_player_stats gps ON gps.game_map_id = r.game_map_id AND gps.player_id = k.killer_player_id
-             WHERE gps.team_id = ? AND k.weapon IS NOT NULL
-             GROUP BY k.weapon"
-        )
-            .bind(id)
-            .fetch_all(db)
-            .await?,
+        EntityKind::Player => {
+            let mut qb: QueryBuilder<MySql> = QueryBuilder::new(
+                "SELECT k.weapon as weapon, COUNT(*) as kills
+                 FROM game_map_round_kills k
+                 JOIN game_map_rounds r ON k.game_map_round_id = r.id
+                 JOIN matches m ON r.match_id = m.id
+                 WHERE k.killer_player_id = "
+            );
+            qb.push_bind(id);
+            qb.push(" AND k.weapon IS NOT NULL");
+            push_maps_filters(&mut qb, filters, "m.scheduled_at", "r.tournament_id");
+            qb.push(" GROUP BY k.weapon");
+            qb.build_query_as().fetch_all(db).await?
+        }
+        EntityKind::Team => {
+            let mut qb: QueryBuilder<MySql> = QueryBuilder::new(
+                "SELECT k.weapon as weapon, COUNT(*) as kills
+                 FROM game_map_round_kills k
+                 JOIN game_map_rounds r ON k.game_map_round_id = r.id
+                 JOIN game_player_stats gps ON gps.game_map_id = r.game_map_id AND gps.player_id = k.killer_player_id
+                 JOIN matches m ON r.match_id = m.id
+                 WHERE gps.team_id = "
+            );
+            qb.push_bind(id);
+            qb.push(" AND k.weapon IS NOT NULL");
+            push_maps_filters(&mut qb, filters, "m.scheduled_at", "r.tournament_id");
+            qb.push(" GROUP BY k.weapon");
+            qb.build_query_as().fetch_all(db).await?
+        }
     };
 
     let mut played_by_weapon: HashMap<String, i64> = played_rows.into_iter().map(|r| (r.weapon, r.times_played)).collect();
@@ -1512,4 +1621,248 @@ pub async fn fetch_match_stats(db: &MySqlPool, match_id: u64) -> Result<Option<M
     }).collect();
 
     Ok(Some(MatchStatsResponse { match_info, team_a, team_b, vetos, maps }))
+}
+
+const DEFAULT_PAGE_SIZE: u32 = 20;
+const MAX_PAGE_SIZE: u32 = 50;
+
+#[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct MatchHistoryQuery {
+    /// Only include matches scheduled on/after this date.
+    pub from: Option<NaiveDate>,
+    /// Only include matches scheduled on/before this date.
+    pub to: Option<NaiveDate>,
+    /// Scope to a single tournament instead of all-time.
+    pub tournament_id: Option<u64>,
+    /// Only include matches against this opponent team.
+    pub opponent_id: Option<u64>,
+    /// Only include matches with this status (`upcoming`, `live`, `finished`).
+    pub status: Option<String>,
+    /// Only include matches from this tournament phase.
+    pub phase_id: Option<u64>,
+    /// Page number, 1-indexed. Defaults to 1.
+    pub page: Option<u32>,
+    /// Results per page, up to 50. Defaults to 20.
+    pub per_page: Option<u32>,
+}
+
+impl MatchHistoryQuery {
+    fn page(&self) -> u32 {
+        self.page.unwrap_or(1).max(1)
+    }
+
+    fn per_page(&self) -> u32 {
+        self.per_page.unwrap_or(DEFAULT_PAGE_SIZE).clamp(1, MAX_PAGE_SIZE)
+    }
+
+    fn as_maps_query(&self) -> MapsQuery {
+        MapsQuery { from: self.from, to: self.to, tournament_id: self.tournament_id }
+    }
+}
+
+fn push_match_history_filters(qb: &mut QueryBuilder<MySql>, query: &MatchHistoryQuery) {
+    if let Some(opponent_id) = query.opponent_id {
+        qb.push(" AND (m.team_a_id = ").push_bind(opponent_id);
+        qb.push(" OR m.team_b_id = ").push_bind(opponent_id);
+        qb.push(")");
+    }
+    if let Some(status) = &query.status {
+        qb.push(" AND m.status = ").push_bind(status.clone());
+    }
+    if let Some(phase_id) = query.phase_id {
+        qb.push(" AND m.phase_id = ").push_bind(phase_id);
+    }
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct TeamMatchEntry {
+    #[serde(flatten)]
+    pub match_info: Match,
+    pub team_a: Option<TeamWithScore>,
+    pub team_b: Option<TeamWithScore>,
+    /// Vetoes for this match, in the order they were made.
+    pub vetos: Vec<MatchVeto>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct PaginatedTeamMatches {
+    pub page: u32,
+    pub per_page: u32,
+    pub total: i64,
+    pub total_pages: i64,
+    pub data: Vec<TeamMatchEntry>,
+}
+
+#[derive(Debug, FromRow)]
+struct CountRow {
+    total: i64,
+}
+
+#[derive(Debug, FromRow)]
+struct TeamMatchVetoRow {
+    match_id: u64,
+    team_id: u64,
+    map_name: String,
+    veto_type: String,
+    order: i32,
+}
+
+#[derive(Debug, FromRow)]
+struct TeamMatchPlayedMapRow {
+    match_id: u64,
+    map_name: String,
+    order: i32,
+}
+
+/// Paginated match history for a team, most recent first, each match
+/// including the opposing team + score and its vetoes in order.
+pub async fn fetch_team_match_history(
+    db: &MySqlPool,
+    team_id: u64,
+    query: &MatchHistoryQuery,
+) -> Result<PaginatedTeamMatches, sqlx::Error> {
+    let filters = query.as_maps_query();
+    let page = query.page();
+    let per_page = query.per_page();
+
+    let mut count_qb: QueryBuilder<MySql> = QueryBuilder::new(
+        "SELECT COUNT(*) as total FROM matches m WHERE (m.team_a_id = "
+    );
+    count_qb.push_bind(team_id);
+    count_qb.push(" OR m.team_b_id = ");
+    count_qb.push_bind(team_id);
+    count_qb.push(")");
+    push_maps_filters(&mut count_qb, &filters, "m.scheduled_at", "m.tournament_id");
+    push_match_history_filters(&mut count_qb, query);
+
+    let mut matches_qb: QueryBuilder<MySql> = QueryBuilder::new(
+        "SELECT
+            m.id as id, m.tournament_id as tournament_id, m.phase_id as phase_id,
+            m.round_number as round_number, m.round_name as round_name,
+            m.scheduled_at as scheduled_at, m.status as status, m.best_of as best_of, m.patch as patch,
+            m.team_a_score as team_a_score, m.team_b_score as team_b_score,
+            ta.id as ta_id, ta.name as ta_name, ta.short_name as ta_short_name,
+            ta.country_code as ta_country_code, ta.bio as ta_bio,
+            ta.socials as ta_socials, ta.vlr_id as ta_vlr_id, ta.is_active as ta_is_active,
+            tb.id as tb_id, tb.name as tb_name, tb.short_name as tb_short_name,
+            tb.country_code as tb_country_code, tb.bio as tb_bio,
+            tb.socials as tb_socials, tb.vlr_id as tb_vlr_id, tb.is_active as tb_is_active
+        FROM matches m
+        LEFT JOIN teams ta ON m.team_a_id = ta.id
+        LEFT JOIN teams tb ON m.team_b_id = tb.id
+        WHERE (m.team_a_id = "
+    );
+    matches_qb.push_bind(team_id);
+    matches_qb.push(" OR m.team_b_id = ");
+    matches_qb.push_bind(team_id);
+    matches_qb.push(")");
+    push_maps_filters(&mut matches_qb, &filters, "m.scheduled_at", "m.tournament_id");
+    push_match_history_filters(&mut matches_qb, query);
+    matches_qb.push(" ORDER BY m.scheduled_at DESC, m.id DESC LIMIT ");
+    matches_qb.push_bind(per_page as i64);
+    matches_qb.push(" OFFSET ");
+    matches_qb.push_bind(((page - 1) as i64) * per_page as i64);
+
+    let (count, match_rows): (CountRow, Vec<MatchInfoRow>) = tokio::try_join!(
+        count_qb.build_query_as().fetch_one(db),
+        matches_qb.build_query_as().fetch_all(db),
+    )?;
+    let total = count.total;
+    let total_pages = if total > 0 { (total + per_page as i64 - 1) / per_page as i64 } else { 0 };
+
+    let match_ids: Vec<u64> = match_rows.iter().map(|r| r.id).collect();
+
+    let mut vetos_by_match: HashMap<u64, Vec<MatchVeto>> = HashMap::new();
+    if !match_ids.is_empty() {
+        let mut veto_qb: QueryBuilder<MySql> = QueryBuilder::new(
+            "SELECT match_id, team_id, map_name, `type` as veto_type, `order`
+            FROM match_vetos WHERE match_id IN ("
+        );
+        for (i, match_id) in match_ids.iter().enumerate() {
+            if i > 0 {
+                veto_qb.push(",");
+            }
+            veto_qb.push_bind(*match_id);
+        }
+        veto_qb.push(") ORDER BY match_id ASC, `order` ASC");
+
+        let veto_rows: Vec<TeamMatchVetoRow> = veto_qb.build_query_as().fetch_all(db).await?;
+        for row in veto_rows {
+            vetos_by_match.entry(row.match_id).or_default().push(MatchVeto {
+                match_id: row.match_id,
+                team_id: row.team_id,
+                map_name: row.map_name,
+                r#type: row.veto_type,
+                order: row.order,
+            });
+        }
+    }
+
+    // Older/untracked matches have no recorded veto process — fall back to the
+    // maps that were actually played (`type: "played"`, no attributable team,
+    // hence the `team_id: 0` sentinel) so the client still gets a map list.
+    let missing_veto_ids: Vec<u64> = match_ids.iter().copied().filter(|id| !vetos_by_match.contains_key(id)).collect();
+    let mut played_maps_by_match: HashMap<u64, Vec<MatchVeto>> = HashMap::new();
+    if !missing_veto_ids.is_empty() {
+        let mut maps_qb: QueryBuilder<MySql> = QueryBuilder::new(
+            "SELECT match_id, map_name, `order` FROM game_maps WHERE match_id IN ("
+        );
+        for (i, match_id) in missing_veto_ids.iter().enumerate() {
+            if i > 0 {
+                maps_qb.push(",");
+            }
+            maps_qb.push_bind(*match_id);
+        }
+        maps_qb.push(") ORDER BY match_id ASC, `order` ASC");
+
+        let map_rows: Vec<TeamMatchPlayedMapRow> = maps_qb.build_query_as().fetch_all(db).await?;
+        for row in map_rows {
+            played_maps_by_match.entry(row.match_id).or_default().push(MatchVeto {
+                match_id: row.match_id,
+                team_id: 0,
+                map_name: row.map_name,
+                r#type: "played".to_string(),
+                order: row.order,
+            });
+        }
+    }
+
+    let data = match_rows.into_iter().map(|row| {
+        let match_info = Match {
+            id: row.id,
+            tournament_id: row.tournament_id,
+            phase_id: row.phase_id,
+            round_number: row.round_number,
+            round_name: row.round_name,
+            scheduled_at: row.scheduled_at,
+            status: row.status,
+            best_of: row.best_of,
+            patch: row.patch,
+        };
+
+        let team_a = row.ta_id.map(|team_id| TeamWithScore {
+            team: Team::from_joined_row(
+                team_id, row.ta_name, row.ta_short_name, row.ta_country_code,
+                row.ta_socials.as_deref(), row.ta_bio, row.ta_vlr_id, row.ta_is_active,
+            ),
+            score: Some(row.team_a_score),
+        });
+
+        let team_b = row.tb_id.map(|team_id| TeamWithScore {
+            team: Team::from_joined_row(
+                team_id, row.tb_name, row.tb_short_name, row.tb_country_code,
+                row.tb_socials.as_deref(), row.tb_bio, row.tb_vlr_id, row.tb_is_active,
+            ),
+            score: Some(row.team_b_score),
+        });
+
+        let vetos = vetos_by_match.remove(&row.id)
+            .or_else(|| played_maps_by_match.remove(&row.id))
+            .unwrap_or_default();
+
+        TeamMatchEntry { match_info, team_a, team_b, vetos }
+    }).collect();
+
+    Ok(PaginatedTeamMatches { page, per_page, total, total_pages, data })
 }

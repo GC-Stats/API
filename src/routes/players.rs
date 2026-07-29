@@ -14,7 +14,7 @@ use std::sync::Arc;
 use axum::routing::get;
 use crate::AppState;
 use crate::models::entity::{fetch_current_logo_ids, parse_socials, partition_logo_history, Player, PlayerFullResponse, PlayerTeamHistory, Team, LogoUrls, LogoRow, LogoHistoryResponse};
-use crate::models::stats::{fetch_player_agent_stats, fetch_stats, fetch_weapon_stats, AgentStatsEntry, AvgStatsResponse, EntityKind, StatsQuery, WeaponStatsEntry};
+use crate::models::stats::{fetch_player_agent_stats, fetch_stats, fetch_weapon_stats, AgentStatsEntry, AvgStatsResponse, EntityKind, MapsQuery, StatsQuery, WeaponStatsEntry};
 use crate::util::escape_like;
 
 pub fn router() -> Router<Arc<AppState>> {
@@ -310,6 +310,7 @@ pub async fn get_player_stats(
 #[utoipa::path(
     get,
     path = "/v1/players/{id}/agents",
+    params(MapsQuery),
     responses(
         (status = 200, description = "Per-agent stats and pickrate for the player", body = [AgentStatsEntry]),
         (status = 404, description = "Player not found"),
@@ -321,6 +322,7 @@ pub async fn get_player_stats(
 
 pub async fn get_player_agents(
     Path(id): Path<u64>,
+    Query(filters): Query<MapsQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<AgentStatsEntry>>, StatusCode> {
     let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM players WHERE id = ?)")
@@ -332,7 +334,7 @@ pub async fn get_player_agents(
         return Err(StatusCode::NOT_FOUND);
     }
 
-    let agents = fetch_player_agent_stats(&state.db_read, id)
+    let agents = fetch_player_agent_stats(&state.db_read, id, &filters)
         .await
         .map_err(|e| {
             tracing::error!("DB error on player agents: {:?}", e);
@@ -345,6 +347,7 @@ pub async fn get_player_agents(
 #[utoipa::path(
     get,
     path = "/v1/players/{id}/weapons",
+    params(MapsQuery),
     responses(
         (status = 200, description = "Weapon usage for the player: rounds held (when known) and kills landed", body = [WeaponStatsEntry]),
         (status = 404, description = "Player not found"),
@@ -356,6 +359,7 @@ pub async fn get_player_agents(
 
 pub async fn get_player_weapons(
     Path(id): Path<u64>,
+    Query(filters): Query<MapsQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<WeaponStatsEntry>>, StatusCode> {
     let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM players WHERE id = ?)")
@@ -367,7 +371,7 @@ pub async fn get_player_weapons(
         return Err(StatusCode::NOT_FOUND);
     }
 
-    let weapons = fetch_weapon_stats(&state.db_read, EntityKind::Player, id)
+    let weapons = fetch_weapon_stats(&state.db_read, EntityKind::Player, id, &filters)
         .await
         .map_err(|e| {
             tracing::error!("DB error on player weapons: {:?}", e);

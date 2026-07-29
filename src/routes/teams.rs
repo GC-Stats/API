@@ -14,7 +14,7 @@ use std::sync::Arc;
 use axum::routing::get;
 use crate::AppState;
 use crate::models::entity::{fetch_current_logo_ids, parse_socials, partition_logo_history, Team, TeamPlayersResponse, TeamResponse, LogoUrls, LogoRow, LogoHistoryResponse};
-use crate::models::stats::{fetch_team_maps, fetch_team_stats, fetch_weapon_stats, EntityKind, MapsQuery, StatsQuery, TeamMapEntry, TeamStatsResponse, WeaponStatsEntry};
+use crate::models::stats::{fetch_team_maps, fetch_team_match_history, fetch_team_stats, fetch_team_vetos, fetch_weapon_stats, EntityKind, MapsQuery, MatchHistoryQuery, PaginatedTeamMatches, StatsQuery, TeamMapEntry, TeamStatsResponse, TeamVetoEntry, WeaponStatsEntry};
 use crate::util::escape_like;
 
 pub fn router() -> Router<Arc<AppState>> {
@@ -26,6 +26,8 @@ pub fn router() -> Router<Arc<AppState>> {
         .route("/{id}/stats", get(get_team_stats))
         .route("/{id}/maps", get(get_team_maps))
         .route("/{id}/weapons", get(get_team_weapons))
+        .route("/{id}/vetos", get(get_team_vetos))
+        .route("/{id}/matches", get(get_team_matches))
 }
 
 #[utoipa::path(
@@ -256,7 +258,7 @@ pub async fn get_team_maps(
         return Err(StatusCode::NOT_FOUND);
     }
 
-    let maps = fetch_team_maps(&state.db_read, id, query.tournament_id)
+    let maps = fetch_team_maps(&state.db_read, id, &query)
         .await
         .map_err(|e| {
             tracing::error!("DB error on team maps: {:?}", e);
@@ -269,6 +271,7 @@ pub async fn get_team_maps(
 #[utoipa::path(
     get,
     path = "/v1/teams/{id}/weapons",
+    params(MapsQuery),
     responses(
         (status = 200, description = "Weapon usage for the team: rounds held (when known) and kills landed", body = [WeaponStatsEntry]),
         (status = 404, description = "Team not found"),
@@ -280,6 +283,7 @@ pub async fn get_team_maps(
 
 pub async fn get_team_weapons(
     Path(id): Path<u64>,
+    Query(filters): Query<MapsQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<WeaponStatsEntry>>, StatusCode> {
     let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM teams WHERE id = ?)")
@@ -291,7 +295,7 @@ pub async fn get_team_weapons(
         return Err(StatusCode::NOT_FOUND);
     }
 
-    let weapons = fetch_weapon_stats(&state.db_read, EntityKind::Team, id)
+    let weapons = fetch_weapon_stats(&state.db_read, EntityKind::Team, id, &filters)
         .await
         .map_err(|e| {
             tracing::error!("DB error on team weapons: {:?}", e);
@@ -299,4 +303,78 @@ pub async fn get_team_weapons(
         })?;
 
     Ok(Json(weapons))
+}
+
+#[utoipa::path(
+    get,
+    path = "/v1/teams/{id}/vetos",
+    params(MapsQuery),
+    responses(
+        (status = 200, description = "Per-map veto behaviour for the team: times played, banned, picked and left as decider", body = [TeamVetoEntry]),
+        (status = 404, description = "Team not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 429, description = "Rate limited"),
+    ),
+    tag = "Teams"
+)]
+
+pub async fn get_team_vetos(
+    Path(id): Path<u64>,
+    Query(filters): Query<MapsQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<TeamVetoEntry>>, StatusCode> {
+    let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM teams WHERE id = ?)")
+        .bind(id)
+        .fetch_one(&state.db_read)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if !exists {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    let vetos = fetch_team_vetos(&state.db_read, id, &filters)
+        .await
+        .map_err(|e| {
+            tracing::error!("DB error on team vetos: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(Json(vetos))
+}
+
+#[utoipa::path(
+    get,
+    path = "/v1/teams/{id}/matches",
+    params(MatchHistoryQuery),
+    responses(
+        (status = 200, description = "Paginated match history for the team, most recent first, each with its vetoes in order", body = PaginatedTeamMatches),
+        (status = 404, description = "Team not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 429, description = "Rate limited"),
+    ),
+    tag = "Teams"
+)]
+
+pub async fn get_team_matches(
+    Path(id): Path<u64>,
+    Query(query): Query<MatchHistoryQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<PaginatedTeamMatches>, StatusCode> {
+    let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM teams WHERE id = ?)")
+        .bind(id)
+        .fetch_one(&state.db_read)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if !exists {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    let history = fetch_team_match_history(&state.db_read, id, &query)
+        .await
+        .map_err(|e| {
+            tracing::error!("DB error on team match history: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(Json(history))
 }

@@ -32,6 +32,8 @@ use crate::routes::teams;
         teams::get_team_stats,
         teams::get_team_maps,
         teams::get_team_weapons,
+        teams::get_team_vetos,
+        teams::get_team_matches,
         tournaments::get_tournament,
         tournaments::get_tournament_by_name,
         tournaments::get_tournament_logos,
@@ -82,6 +84,9 @@ use crate::routes::teams;
             crate::models::stats::RoundStatsFull,
             crate::models::stats::RoundPlayerStatFull,
             crate::models::stats::RoundKillEvent,
+            crate::models::stats::TeamVetoEntry,
+            crate::models::stats::TeamMatchEntry,
+            crate::models::stats::PaginatedTeamMatches,
         )
     ),
     tags(
