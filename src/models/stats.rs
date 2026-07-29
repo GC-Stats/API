@@ -721,7 +721,7 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, filters: &MapsQuery) 
     map_totals_qb.push_bind(team_id);
     map_totals_qb.push(" OR m.team_b_id = ");
     map_totals_qb.push_bind(team_id);
-    map_totals_qb.push(") AND gm.is_completed = 1");
+    map_totals_qb.push(") AND gm.is_completed = 1 AND gm.team_a_score >= 0 AND gm.team_b_score >= 0");
     push_maps_filters(&mut map_totals_qb, filters, "m.scheduled_at", "m.tournament_id");
     map_totals_qb.push(" GROUP BY gm.map_name");
 
@@ -776,7 +776,7 @@ pub async fn fetch_team_maps(db: &MySqlPool, team_id: u64, filters: &MapsQuery) 
         WHERE gps.team_id = "#
     );
     comp_rows_qb.push_bind(team_id);
-    comp_rows_qb.push(" AND gm.is_completed = 1");
+    comp_rows_qb.push(" AND gm.is_completed = 1 AND gm.team_a_score >= 0 AND gm.team_b_score >= 0");
     push_maps_filters(&mut comp_rows_qb, filters, "m.scheduled_at", "gps.tournament_id");
     comp_rows_qb.push(" ORDER BY gps.game_map_id");
 
@@ -955,7 +955,7 @@ pub async fn fetch_team_vetos(db: &MySqlPool, team_id: u64, filters: &MapsQuery)
     played_qb.push_bind(team_id);
     played_qb.push(" OR m.team_b_id = ");
     played_qb.push_bind(team_id);
-    played_qb.push(") AND gm.is_completed = 1");
+    played_qb.push(") AND gm.is_completed = 1 AND gm.team_a_score >= 0 AND gm.team_b_score >= 0");
     push_maps_filters(&mut played_qb, filters, "m.scheduled_at", "m.tournament_id");
     played_qb.push(" GROUP BY gm.map_name");
 
