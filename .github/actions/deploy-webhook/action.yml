@@ -61,7 +61,7 @@ runs:
           STATUS=$(jq -r '.status // empty' /tmp/deploy-response.json)
           REMOTE_VERSION=$(jq -r '.version // empty' /tmp/deploy-response.json)
 
-          if [ "$STATUS" != "ok" ] then
+          if [ "$STATUS" != "ok" ]; then
             echo "❌ Health check failed on ${SERVER}: status=${STATUS} version=${REMOTE_VERSION} (expected ${VERSION})"
             exit 1
           fi
