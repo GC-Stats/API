@@ -43,6 +43,9 @@ RUN useradd -ms /bin/bash appuser
 
 WORKDIR /app
 
+ARG RELEASE_VERSION=dev
+ENV APP_VERSION=$RELEASE_VERSION
+
 COPY --from=builder /app/target/release/GC-Stats-API /usr/local/bin/api
 
 RUN chmod +x /usr/local/bin/api && chown appuser:appuser /usr/local/bin/api

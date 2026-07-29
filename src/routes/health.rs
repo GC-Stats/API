@@ -12,7 +12,10 @@ use axum::{Json};
 use serde_json::{json, Value};
 
 pub async fn health_check() -> Json<Value> {
+    let version = std::env::var("APP_VERSION").unwrap_or_else(|_| "dev".to_string());
+
     Json(json!({
-        "status": "up"
+        "status": "ok",
+        "version": version
     }))
 }
