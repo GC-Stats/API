@@ -129,10 +129,10 @@ where
 {
     let mut redis = state.redis.clone();
 
-    if let Ok(Some(json)) = redis.get::<_, Option<String>>(cache_key).await {
-        if let Ok(schema) = serde_json::from_str::<CubeSchemaSet>(&json) {
-            return Ok(schema);
-        }
+    if let Ok(Some(json)) = redis.get::<_, Option<String>>(cache_key).await
+        && let Ok(schema) = serde_json::from_str::<CubeSchemaSet>(&json)
+    {
+        return Ok(schema);
     }
 
     let meta = fetch_cube_meta(state).await?;
