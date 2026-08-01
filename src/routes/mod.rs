@@ -19,6 +19,7 @@ pub mod players;
 pub mod tournaments;
 pub mod matches;
 pub mod map;
+pub mod internal;
 
 pub fn api_router_v1() -> Router<Arc<AppState>> {
     Router::new()

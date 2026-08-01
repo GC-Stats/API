@@ -1,0 +1,203 @@
+/*
+    GC-Stats — API
+
+    `/internal/nl-query`: translates a natural-language question (already
+    authorized and quota-counted by Laravel) into a Cube.dev query, executes
+    it, and returns the result.
+
+    `/internal/cube-schema` + `/internal/cube-query`: the direct query
+    builder path — Laravel lets a user pick measures/dimensions/filters
+    themselves instead of going through an LLM, so these skip the whole
+    nlquery/provider machinery and go straight to validate+execute against
+    the same Cube schema nl-query uses.
+
+    All three are guarded by `mw_internal_auth`, not the public `x-api-key`
+    middleware.
+
+    Copyright (c) 2026 Alice Alleman — GC-Stats-API
+    License: https://github.com/GC-Stats/API/blob/main/LICENSE.md (GC-Stats License v1.0)
+    Repository: https://github.com/GC-Stats/API
+*/
+
+use std::sync::Arc;
+use std::time::Duration;
+
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+
+use crate::llm::anthropic::AnthropicProvider;
+use crate::llm::openai::OpenAiProvider;
+use crate::llm::LlmProvider;
+use crate::nlquery::cube::{execute_cube_query, get_cube_schema, get_full_cube_schema, CubeSchemaSet};
+use crate::nlquery::error::NlQueryError;
+use crate::nlquery::prompt::build_system_prompt;
+use crate::nlquery::provider::{resolve_provider, ProviderChoice, ResolvedProvider};
+use crate::nlquery::query::{
+    normalize_measure_dimension_split, validate_cube_query, validate_query_scope, validate_single_view, CubeQuery,
+};
+use crate::AppState;
+
+/// Hard ceiling applied to any query builder request regardless of what the
+/// caller asked for — there's no LLM here to keep a request reasonable, so
+/// this is the only thing standing between a user and an accidental
+/// full-table pull.
+const CUBE_QUERY_BUILDER_MAX_LIMIT: u32 = 5000;
+
+/// Applied when the caller doesn't specify a `limit` at all — the max is a
+/// ceiling for callers who ask for a lot, not a sane size for the common
+/// case of an unspecified limit.
+const CUBE_QUERY_BUILDER_DEFAULT_LIMIT: u32 = 100;
+
+pub fn router() -> Router<Arc<AppState>> {
+    Router::new()
+        .route("/nl-query", post(nl_query))
+        .route("/cube-schema", get(cube_schema))
+        .route("/cube-query", post(cube_query))
+}
+
+#[derive(Deserialize)]
+pub struct NlQueryRequest {
+    pub query: String,
+    pub llm_provider: ProviderChoice,
+    /// Present only when `llm_provider` isn't "platform". Never logged,
+    /// never persisted — used in memory for the duration of this request.
+    pub api_key: Option<String>,
+    pub request_id: String,
+}
+
+impl std::fmt::Debug for NlQueryRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NlQueryRequest")
+            .field("query", &self.query)
+            .field("llm_provider", &self.llm_provider)
+            .field("api_key", &self.api_key.as_ref().map(|_| "[redacted]"))
+            .field("request_id", &self.request_id)
+            .finish()
+    }
+}
+
+#[derive(Serialize)]
+pub struct NlQueryResponse {
+    pub cube_query: CubeQuery,
+    pub result: serde_json::Value,
+    pub provider_used: ProviderChoice,
+}
+
+pub async fn nl_query(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<NlQueryRequest>,
+) -> Result<Json<NlQueryResponse>, NlQueryError> {
+    let timeout = Duration::from_millis(state.nlquery.timeout_ms);
+
+    match tokio::time::timeout(timeout, handle_nl_query(&state, &payload)).await {
+        Ok(result) => result,
+        Err(_) => {
+            tracing::error!(request_id = %payload.request_id, "nl-query timed out");
+            Err(NlQueryError::Timeout)
+        }
+    }
+}
+
+async fn handle_nl_query(state: &Arc<AppState>, payload: &NlQueryRequest) -> Result<Json<NlQueryResponse>, NlQueryError> {
+    let (provider_used, resolved) = resolve_provider(payload.llm_provider, payload.api_key.as_deref(), &state.nlquery)?;
+
+    let schema = get_cube_schema(state).await?;
+    let system_prompt = build_system_prompt(&schema);
+
+    let mut cube_query = match resolved {
+        ResolvedProvider::OpenAi { api_key, model } => {
+            OpenAiProvider { api_key, model }
+                .generate_cube_query(&state.http_client, &system_prompt, &payload.query)
+                .await?
+        }
+        ResolvedProvider::Anthropic { api_key, model } => {
+            AnthropicProvider { api_key, model }
+                .generate_cube_query(&state.http_client, &system_prompt, &payload.query)
+                .await?
+        }
+    };
+
+    normalize_measure_dimension_split(&mut cube_query, &schema);
+
+    // Logged before validation so a rejected (hallucinated) query is still
+    // visible for diagnosis, not just successful ones. `cube_query` only
+    // ever holds measures/dimensions/filters — never an API key.
+    tracing::debug!(
+        request_id = %payload.request_id,
+        cube_query = %serde_json::json!(&cube_query),
+        "Cube query generated by the model"
+    );
+
+    validate_cube_query(&cube_query, &schema)?;
+    validate_single_view(&cube_query)?;
+    validate_query_scope(&cube_query)?;
+
+    let result = execute_cube_query(state, &cube_query).await?;
+
+    tracing::info!(request_id = %payload.request_id, provider = ?provider_used, "nl-query executed");
+
+    Ok(Json(NlQueryResponse { cube_query, result, provider_used }))
+}
+
+/// Feeds the query builder's measure/dimension pickers on the Laravel side.
+/// Full catalogue (every cube, not just the LLM-safe views) — a human
+/// picking fields directly doesn't need the same guardrail nl-query needs.
+async fn cube_schema(State(state): State<Arc<AppState>>) -> Result<Json<CubeSchemaSet>, NlQueryError> {
+    Ok(Json(get_full_cube_schema(&state).await?))
+}
+
+#[derive(Deserialize)]
+pub struct CubeQueryRequest {
+    pub query: CubeQuery,
+    pub request_id: String,
+}
+
+#[derive(Serialize)]
+pub struct CubeQueryResponse {
+    pub cube_query: CubeQuery,
+    pub result: serde_json::Value,
+}
+
+async fn cube_query(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<CubeQueryRequest>,
+) -> Result<Json<CubeQueryResponse>, NlQueryError> {
+    let timeout = Duration::from_millis(state.nlquery.timeout_ms);
+
+    match tokio::time::timeout(timeout, handle_cube_query(&state, &payload)).await {
+        Ok(result) => result,
+        Err(_) => {
+            tracing::error!(request_id = %payload.request_id, "cube-query timed out");
+            Err(NlQueryError::Timeout)
+        }
+    }
+}
+
+async fn handle_cube_query(
+    state: &Arc<AppState>,
+    payload: &CubeQueryRequest,
+) -> Result<Json<CubeQueryResponse>, NlQueryError> {
+    // Must match cube_schema()'s catalogue (full, unfiltered) — otherwise a
+    // field the schema endpoint just offered would fail validation here.
+    let schema = get_full_cube_schema(state).await?;
+
+    let mut cube_query = payload.query.clone();
+    cube_query.limit = Some(
+        cube_query
+            .limit
+            .map_or(CUBE_QUERY_BUILDER_DEFAULT_LIMIT, |l| l.min(CUBE_QUERY_BUILDER_MAX_LIMIT)),
+    );
+
+    validate_cube_query(&cube_query, &schema)?;
+    validate_query_scope(&cube_query)?;
+
+    let result = execute_cube_query(state, &cube_query).await?;
+
+    tracing::info!(request_id = %payload.request_id, "cube-query executed");
+
+    Ok(Json(CubeQueryResponse { cube_query, result }))
+}

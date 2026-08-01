@@ -16,6 +16,8 @@ mod middleware;
 mod doc;
 mod logging;
 mod util;
+mod nlquery;
+mod llm;
 
 use axum::{routing::get, Router};
 use axum::middleware as ax_middleware;
@@ -40,6 +42,10 @@ pub struct AppState {
     pub db_write: sqlx::MySqlPool,
     pub redis: redis::aio::ConnectionManager,
     pub redis_local: redis::aio::ConnectionManager,
+    pub http_client: reqwest::Client,
+    pub internal_api_secret: String,
+    pub internal_auth_skip_timestamp_check: bool,
+    pub nlquery: nlquery::config::NlQueryConfig,
 }
 
 async fn connect_pool(database_url: &str, max_connections: u32) -> sqlx::MySqlPool {
@@ -103,11 +109,53 @@ async fn main() {
         .await
         .expect("Failed to connect to local Redis");
 
+    let http_client = reqwest::Client::builder()
+        .build()
+        .expect("Failed to build HTTP client");
+
+    let internal_api_secret = std::env::var("INTERNAL_API_SECRET").expect("INTERNAL_API_SECRET missing");
+
+    // TODO(temp/testing): remove once Laravel-side testing is done — skips
+    // the replay-protection skew check entirely, do not leave enabled in production.
+    let internal_auth_skip_timestamp_check = env::var("INTERNAL_AUTH_SKIP_TIMESTAMP_CHECK")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+
+    let nlquery_config = nlquery::config::NlQueryConfig {
+        cube_api_url: std::env::var("CUBE_API_URL").expect("CUBE_API_URL missing"),
+        cube_api_secret: env::var("CUBE_API_SECRET").ok(),
+        cube_schema_cache_ttl_secs: env::var("CUBE_SCHEMA_CACHE_TTL_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(3600),
+        cube_views: env::var("CUBE_VIEW_NAMES")
+            .unwrap_or_else(|_| {
+                "kill_stats,player_stats,player_advanced_stats,damage_stats,round_results,\
+                 map_results,match_results,round_state_stats,player_positions,tournament_info,\
+                 tournament_phases_info,tournament_participants,roster,match_schedule,\
+                 match_vetos_info,point_entries_info"
+                    .to_string()
+            })
+            .split(',')
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty())
+            .collect(),
+        platform_llm_provider: env::var("PLATFORM_LLM_PROVIDER").unwrap_or_else(|_| "openai".to_string()),
+        platform_llm_api_key: env::var("PLATFORM_LLM_API_KEY").unwrap_or_default(),
+        openai_model: env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_string()),
+        anthropic_model: env::var("ANTHROPIC_MODEL").unwrap_or_else(|_| "claude-3-5-haiku-20241022".to_string()),
+        timeout_ms: env::var("NL_QUERY_TIMEOUT_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(12_000),
+    };
+
     let shared_state = std::sync::Arc::new(AppState {
         db_read,
         db_write,
         redis: redis_manager,
         redis_local: redis_local_manager,
+        http_client,
+        internal_api_secret,
+        internal_auth_skip_timestamp_check,
+        nlquery: nlquery_config,
     });
 
     tokio::spawn(logging::flusher::run(shared_state.clone()));
@@ -153,6 +201,13 @@ async fn main() {
             ax_middleware::from_fn_with_state(
                 shared_state.clone(),
                 middleware::logging::mw_request_logger
+            )
+        ))
+
+        .nest("/internal", routes::internal::router().layer(
+            ax_middleware::from_fn_with_state(
+                shared_state.clone(),
+                middleware::auth::mw_internal_auth
             )
         ))
 
