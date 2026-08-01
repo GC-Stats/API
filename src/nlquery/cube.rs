@@ -26,6 +26,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use jsonwebtoken::{encode, EncodingKey, Header};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +36,14 @@ use crate::AppState;
 
 const SCHEMA_CACHE_KEY: &str = "nlquery:cube_schema";
 const FULL_SCHEMA_CACHE_KEY: &str = "nlquery:cube_full_schema";
+
+#[derive(Serialize)]
+struct CubeClaims {}
+
+fn cube_auth_token(secret: &str) -> Result<String, NlQueryError> {
+    encode(&Header::default(), &CubeClaims {}, &EncodingKey::from_secret(secret.as_bytes()))
+        .map_err(|e| NlQueryError::Config(format!("failed to sign Cube API token: {e}")))
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CubeSchemaSet {
@@ -99,7 +108,7 @@ async fn fetch_cube_meta(state: &Arc<AppState>) -> Result<CubeMetaResponse, NlQu
         .http_client
         .get(format!("{}/cubejs-api/v1/meta", state.nlquery.cube_api_url));
     if let Some(secret) = &state.nlquery.cube_api_secret {
-        req = req.bearer_auth(secret);
+        req = req.bearer_auth(cube_auth_token(secret)?);
     }
 
     let resp = req
@@ -172,7 +181,7 @@ pub async fn execute_cube_query(state: &Arc<AppState>, query: &CubeQuery) -> Res
         .post(format!("{}/cubejs-api/v1/load", state.nlquery.cube_api_url))
         .json(&serde_json::json!({ "query": query }));
     if let Some(secret) = &state.nlquery.cube_api_secret {
-        req = req.bearer_auth(secret);
+        req = req.bearer_auth(cube_auth_token(secret)?);
     }
 
     let resp = req
